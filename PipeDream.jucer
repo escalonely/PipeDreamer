@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="Lwsp3c" name="PipeDream" projectType="guiapp" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1">
+  <MAINGROUP id="O96DaU" name="PipeDream">
+    <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
+      <FILE id="xtOWpg" name="Board.cpp" compile="1" resource="0" file="Source/Board.cpp"/>
+      <FILE id="iyXYv9" name="Board.h" compile="0" resource="0" file="Source/Board.h"/>
+      <FILE id="EJGWBS" name="Queue.cpp" compile="1" resource="0" file="Source/Queue.cpp"/>
+      <FILE id="j8JcJ6" name="Queue.h" compile="0" resource="0" file="Source/Queue.h"/>
+      <FILE id="IDzCBV" name="TilePiece.cpp" compile="1" resource="0" file="Source/TilePiece.cpp"/>
+      <FILE id="TILJZm" name="TilePiece.h" compile="0" resource="0" file="Source/TilePiece.h"/>
+      <FILE id="trEwuK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
+      <FILE id="zpZr05" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="cZECLC" name="MainComponent.cpp" compile="1" resource="0"
+            file="Source/MainComponent.cpp"/>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
+  <EXPORTFORMATS>
+    <VS2017 targetFolder="Builds/VisualStudio2017">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="PipeDream"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="PipeDream"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_core" path="..\..\..\Juce\JUCE_6.0.7\modules"/>
+        <MODULEPATH id="juce_data_structures" path="..\..\..\Juce\JUCE_6.0.7\modules"/>
+        <MODULEPATH id="juce_events" path="..\..\..\Juce\JUCE_6.0.7\modules"/>
+        <MODULEPATH id="juce_graphics" path="..\..\..\Juce\JUCE_6.0.7\modules"/>
+        <MODULEPATH id="juce_gui_basics" path="..\..\..\Juce\JUCE_6.0.7\modules"/>
+      </MODULEPATHS>
+    </VS2017>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <WINDOWS/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>
