@@ -23,7 +23,7 @@ Queue::Queue(int size)
 	for (int i = 0; i < size; ++i)
 	{
 		TilePiece::Type t(static_cast<TilePiece::Type>(m_dist(m_mt)));
-		m_buff.push_back(new Pipe(t));
+		m_buff.push_back(dynamic_cast<Pipe*>(TilePiece::CreateTile(t)));
 	}
 
 	// This will move with every Pop.
@@ -35,6 +35,19 @@ Queue::~Queue()
 	for (int i = 0; i < m_buff.size(); ++i)
 		delete m_buff[i];
 
+}
+
+void Queue::Reset()
+{
+	for (int i = 0; i < m_buff.size(); ++i)
+	{
+		delete m_buff[i];
+
+		TilePiece::Type t(static_cast<TilePiece::Type>(m_dist(m_mt)));
+		m_buff[i] = dynamic_cast<Pipe*>(TilePiece::CreateTile(t));
+	}
+
+	m_readPos = 0;
 }
 
 int Queue::GetSize() const
@@ -62,7 +75,9 @@ TilePiece::Type Queue::Pop()
 
 	// Randomize type of m_buff[m_readPos]
 	TilePiece::Type randomType(static_cast<TilePiece::Type>(m_dist(m_mt)));
-	m_buff[m_readPos]->SetType(randomType);
+
+	delete m_buff[m_readPos];
+	m_buff[m_readPos] = dynamic_cast<Pipe*>(TilePiece::CreateTile(randomType));
 
 	// Move read position
 	m_readPos = (m_readPos + 1) % m_buff.size();

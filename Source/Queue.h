@@ -21,6 +21,8 @@ public:
 
 	~Queue();
 
+	void Reset();
+
 	int GetSize() const;
 
 	Pipe* GetTile(int pos) const;
