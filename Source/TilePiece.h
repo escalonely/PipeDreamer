@@ -10,8 +10,15 @@
 
 #pragma once
 
-//#include <vector>
 
+static constexpr float MAX_OOZE_LEVEL = 100.0f;
+static constexpr float MIN_OOZE_LEVEL = 0.0f;
+
+
+
+/**
+ * TODO
+ */
 class TilePiece
 {
 public:
@@ -38,21 +45,28 @@ public:
 
 	virtual ~TilePiece();
 
+	static TilePiece* CreateTile(Type t = TilePiece::TYPE_NONE);
+
 	Type GetType() const;
 
-	void SetType(Type t);
+	bool IsStart() const;
 
 protected:
+	void SetType(Type t);
+
 	Type	m_type;
 };
 
 
 /**
- *
+ * TODO
  */
 class Pipe : public TilePiece
 {
 public:
+	/**
+	 * TODO
+	 */
 	enum Direction
 	{
 		DIR_NONE = 0,
@@ -66,23 +80,25 @@ public:
 
 	virtual ~Pipe();
 
-	float Pump(float amount);
+	virtual float Pump(float amount);
 
 	float GetOozeLevel() const;
 
-	bool IsFull() const;
+	virtual bool IsFull() const;
 
-	bool IsEmpty() const;
+	virtual bool IsEmpty() const;
 
 	bool HasOpening(Pipe::Direction dir) const;
 
 	static Pipe::Direction GetOppositeDirection(Pipe::Direction dir);
 
-	bool SetFlowEntry(Pipe::Direction dir);
+	virtual bool SetFlowEntry(Pipe::Direction dir);
 
-	Pipe::Direction GetFlowDirection() const;
+	virtual Pipe::Direction GetFlowDirection() const;
 
-	void SetFlowDirection(Pipe::Direction dir);
+	void Explode();
+
+	int PopExplosion();
 
 protected:
 	/**
@@ -93,6 +109,54 @@ protected:
 	/**
 	 * TODO
 	 */
+	int m_exploding;
+
+	/**
+	 * TODO
+	 */
 	Pipe::Direction m_flowDirection;
 };
 
+/**
+ * TODO
+ */
+class Cross : public Pipe
+{
+public:
+	/**
+	 * TODO
+	 */
+	enum Way
+	{
+		WAY_NONE = 0,
+		WAY_VERTICAL,
+		WAY_HORIZONTAL
+	};
+
+	Cross();
+
+	virtual float Pump(float amount) override;
+
+	float GetOozeLevel(Way w) const;
+
+	virtual bool IsFull() const override;
+
+	virtual bool IsEmpty() const override;
+
+	virtual bool SetFlowEntry(Pipe::Direction dir) override;
+
+
+protected:
+	/**
+	 * TODO
+	 */
+	float m_horizOozeLevel;
+
+	/**
+	 * TODO
+	 */
+	float m_vertOozeLevel;
+
+	bool m_horizWayFree;
+	bool m_vertWayFree;
+};
