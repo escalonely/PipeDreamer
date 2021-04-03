@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1">
   <MAINGROUP id="O96DaU" name="PipeDream">
     <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
+      <FILE id="tzAdFP" name="ScoreWindow.cpp" compile="1" resource="0" file="Source/ScoreWindow.cpp"/>
+      <FILE id="N77gbK" name="ScoreWindow.h" compile="0" resource="0" file="Source/ScoreWindow.h"/>
       <FILE id="xtOWpg" name="Board.cpp" compile="1" resource="0" file="Source/Board.cpp"/>
       <FILE id="iyXYv9" name="Board.h" compile="0" resource="0" file="Source/Board.h"/>
       <FILE id="EJGWBS" name="Queue.cpp" compile="1" resource="0" file="Source/Queue.cpp"/>
@@ -33,11 +35,11 @@
     </VS2017>
   </EXPORTFORMATS>
   <MODULES>
-    <MODULE id="juce_core" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
-    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
-    <MODULE id="juce_events" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
-    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
-    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1" useGlobalPath="0"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="1" useGlobalPath="1"/>
   </MODULES>
   <LIVE_SETTINGS>
     <WINDOWS/>
