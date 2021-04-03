@@ -14,6 +14,9 @@
 #include <map>
 #include "TilePiece.h"
 
+/**
+ * TODO
+ */
 class Board
 {
 public:
@@ -25,7 +28,7 @@ public:
 
 	TilePiece* GetTile(int col, int row) const;
 
-	void SetTileType(int col, int row, TilePiece::Type t);
+	void ReplaceTile(int col, int row, TilePiece::Type t);
 
 	int GetNumRows() const;
 
@@ -37,9 +40,9 @@ public:
 
 	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) /*const*/; // TODO: const deadlock
 
-protected:
-	//std::vector< std::vector<TilePiece*>> m_tiles;
+	int GetScore() const;
 
+protected:
 	TilePiece* m_oozingTile;
 
 	int m_numCols;

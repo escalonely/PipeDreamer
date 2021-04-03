@@ -26,13 +26,13 @@ Board::Board(int numCols, int numRows)
 			// TODO: Set random starting tile position
 			if (i == 0 && j == 0)
 			{
-				m_oozingTile = new Pipe(TilePiece::TYPE_START_E);
+				m_oozingTile = TilePiece::CreateTile(TilePiece::TYPE_START_E);
 				tile = m_oozingTile;
 			}
 
 			// The rest are just empty tiles.
 			else
-				tile = new TilePiece();
+				tile = TilePiece::CreateTile();
 			
 			m_tileMap[coord] = tile;
 		}
@@ -61,13 +61,22 @@ TilePiece* Board::GetTile(int col, int row) const
 	return m_tileMap.at(Coord(col, row));
 }
 
-void Board::SetTileType(int col, int row, TilePiece::Type t)
+void Board::ReplaceTile(int col, int row, TilePiece::Type t)
 {
 	Coord c(col, row);
-	if (m_tileMap[c]->GetType() != t)
+
+	// If the old tile wasn't empty (was a pipe), we mark the replacement tile
+	// so that an explosion graphic can be drawn over it.
+	bool explode = (m_tileMap[c]->GetType() != TilePiece::TYPE_NONE);
+
+	delete m_tileMap[c];
+	m_tileMap[c] = TilePiece::CreateTile(t);
+
+	if (explode)
 	{
-		delete m_tileMap[c];
-		m_tileMap[c] = new Pipe(t);
+		Pipe* pipe = dynamic_cast<Pipe*>(m_tileMap[c]);
+		if (pipe != nullptr)
+			pipe->Explode();
 	}
 }
 
@@ -99,19 +108,18 @@ bool Board::Pump(float amount)
 			Pipe* neighbor = dynamic_cast<Pipe*>(FindNeighbor(oozingPipe, outFlowDir));
 			if ((neighbor != nullptr) &&
 				(neighbor->HasOpening(inFlowDir)) &&	// Neighbor has an opening in the right spot.
-				(neighbor->IsEmpty()))					// Neighbor not full of ooze yet
+				(neighbor->SetFlowEntry(inFlowDir)))	// Able to set the ooze entry point.
 			{
-				// Set the ooze entry point.
-				if (neighbor->SetFlowEntry(inFlowDir))
-				{
-					// Now the ooze is flowing into the neighbor
-					m_oozingTile = neighbor;
+				// Now the ooze is flowing into the neighbor
+				m_oozingTile = neighbor;
 
-					// Ooze saved.
-					ret = true;
-				}
+				// Ooze saved.
+				ret = true;
 			}
-			ret = false;
+
+			// Spill!
+			else
+				ret = false;
 		}
 		else
 		{
@@ -136,8 +144,10 @@ void Board::Reset()
 	}
 
 	// TODO: Set random starting tile
-	m_oozingTile = m_tileMap[Coord(0, 0)];
-	m_oozingTile->SetType(TilePiece::TYPE_START_E);
+	Coord c(0, 0);
+	delete m_tileMap[c];
+	m_tileMap[c] = TilePiece::CreateTile(TilePiece::TYPE_START_E);
+	m_oozingTile = m_tileMap[c];
 }
 
 TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
@@ -159,10 +169,10 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 	switch (dir)
 	{
 		case Pipe::DIR_N:
-			coord.second += 1;
+			coord.second -= 1;
 			break;
 		case Pipe::DIR_S:
-			coord.second -= 1;
+			coord.second += 1;
 			break;
 		case Pipe::DIR_E:
 			coord.first += 1;
@@ -182,4 +192,54 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 	}
 
 	return ret;
+}
+
+int Board::GetScore() const
+{
+	int score(0);
+
+	for (int i = 0; i < GetNumCols(); i++)
+	{
+		for (int j = 0; j < GetNumRows(); j++)
+		{
+			Coord c(i, j);
+
+			switch (m_tileMap.at(c)->GetType())
+			{
+			case TilePiece::TYPE_VERTICAL:
+			case TilePiece::TYPE_HORIZONTAL:
+			case TilePiece::TYPE_NW_ELBOW:
+			case TilePiece::TYPE_NE_ELBOW:
+			case TilePiece::TYPE_SE_ELBOW:
+			case TilePiece::TYPE_SW_ELBOW:
+				{
+					Pipe* pipe = dynamic_cast<Pipe*>(m_tileMap.at(c));
+					if (pipe->IsFull())
+						score += 100;
+				}
+				break;
+			case TilePiece::TYPE_CROSS:
+				{
+					// Cross tile awards normal points if only one way is full.
+					Cross* cross = dynamic_cast<Cross*>(m_tileMap.at(c));
+					if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) >= MAX_OOZE_LEVEL) && 
+						(cross->GetOozeLevel(Cross::WAY_VERTICAL) < MAX_OOZE_LEVEL))
+						score += 100;
+					else if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) < MAX_OOZE_LEVEL) &&
+						(cross->GetOozeLevel(Cross::WAY_VERTICAL) >= MAX_OOZE_LEVEL))
+						score += 100;
+
+					// If both ways are full, give bonus points!
+					else if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) >= MAX_OOZE_LEVEL) &&
+						(cross->GetOozeLevel(Cross::WAY_VERTICAL) >= MAX_OOZE_LEVEL))
+						score += 300;
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	return score;
 }
