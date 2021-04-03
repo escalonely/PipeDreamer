@@ -2,12 +2,19 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Board.h"
-#include "Queue.h"
+
+class Board;
+class Queue;
+class TilePiece;
+class ScoreWindow;
 
 
-class MainComponent  : public	juce::Component,
-								juce::Timer
+/**
+ * TODO
+ */
+class MainComponent  :	public juce::Component,
+						public juce::Timer,
+						public juce::ChangeListener
 {
 public:
     MainComponent();
@@ -18,16 +25,28 @@ public:
 
 	void timerCallback() override;
 	void mouseDown(const juce::MouseEvent& event) override;
+	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
-	static juce::Colour GetTileTypeTestColor(TilePiece::Type t);
-	void DrawTile(const TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
+	juce::Colour GetCurrentTileColor() const;
+	float GetCurrentOozePerPump() const;
+	void DrawTile(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
+	void DrawOoze(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
 
 private:
 	Board* m_board;
 
 	Queue* m_queue;
 
-	float m_oozeAmount;
+	ScoreWindow* m_scoreWindow;
+
+	/**
+	 * Level starts at 1, and as it increases, the amount of ooze pumped per frame also increases.
+	 */
+	int m_difficultyLevel;
+
+	int m_cummulativeScore;
+
+	int m_blockInteraction;
 
 	juce::CriticalSection m_lock;
 
