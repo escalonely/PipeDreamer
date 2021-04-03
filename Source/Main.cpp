@@ -23,6 +23,8 @@ public:
     //==============================================================================
     void initialise (const juce::String& commandLine) override
     {
+		(void)commandLine;
+
         // This method is where you should put your application's initialisation code..
 
         mainWindow.reset (new MainWindow (getApplicationName()));
@@ -45,6 +47,8 @@ public:
 
     void anotherInstanceStarted (const juce::String& commandLine) override
     {
+		(void)commandLine;
+
         // When another instance of the app is launched while this one is running,
         // this method is invoked, and the commandLine parameter tells you what
         // the other instance's command-line arguments were.
