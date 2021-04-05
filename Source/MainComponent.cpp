@@ -4,6 +4,7 @@
 #include "ScoreWindow.h"
 #include "Board.h"
 #include "Queue.h"
+#include "Randomizer.h"
 
 static constexpr int TILESIZE = 70;
 static constexpr int HALFTILE = TILESIZE / 2;
@@ -11,12 +12,15 @@ static constexpr int HALFTILE = TILESIZE / 2;
 static constexpr int BOARD_VSTARTPOS = 80;
 static constexpr int BOARD_HSTARTPOS = 175;
 
+static constexpr int MAX_NUM_BOMBS = 5;
+
 
 MainComponent::MainComponent()
 	:	m_blockInteraction(0),
 		m_difficultyLevel(1),
 		m_cummulativeScore(0),
-		m_scoreWindow(nullptr)
+		m_scoreWindow(nullptr),
+		m_numBombs(MAX_NUM_BOMBS)
 {
     setSize (900, 600);
 
@@ -25,6 +29,10 @@ MainComponent::MainComponent()
 
 	// Create queue
 	m_queue = new Queue(5);
+
+	// Initialize randomizer and store pointer
+	//  to ensure it is deleted on shutdown.
+	m_randomizer = Randomizer::GetInstance();
 
 	// GUI-refreh rate
 	startTimer(60);
@@ -35,6 +43,7 @@ MainComponent::~MainComponent()
 	delete m_board;
 	delete m_queue;
 	delete m_scoreWindow;
+	delete m_randomizer;
 }
 
 void MainComponent::paint(juce::Graphics& g)
@@ -48,10 +57,12 @@ void MainComponent::paint(juce::Graphics& g)
     g.setColour (juce::Colours::white);
     //g.drawText ("Hello World!", getLocalBounds(), juce::Justification::centred, true);
 
-	static constexpr int queueVStartPos = 450;
-	static constexpr int queueHStartPos = 50;
+	// Draw bombs
+	DrawBombs(juce::Point<int>(538, 20), g);
 
 	// Draw tile queue
+	static constexpr int queueVStartPos = 450;
+	static constexpr int queueHStartPos = 50;
 	for (int i = 0; i < m_queue->GetSize(); i++)
 	{
 		// Pipe shape
@@ -128,11 +139,30 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 												TILESIZE, TILESIZE);
 				if (tileRect.contains(clickPos))
 				{
-					TilePiece* clickedTile = m_board->GetTile(i, j);
-					Pipe* clickedPipe = dynamic_cast<Pipe*>(clickedTile);
+					static constexpr int framesInteractionBlocked = 5;
 
-					if ((clickedTile->GetType() == TilePiece::TYPE_NONE) ||
-						((clickedPipe != nullptr) && (clickedPipe->IsEmpty()) && (!clickedPipe->IsStart())))
+					TilePiece* clickedTile = m_board->GetTile(i, j);
+					bool replace(clickedTile->GetType() == TilePiece::TYPE_NONE);
+
+					if (!replace)
+					{
+						Pipe* clickedPipe = dynamic_cast<Pipe*>(clickedTile);
+						if ((clickedPipe != nullptr) &&
+							(clickedPipe->IsEmpty()) &&		// Only empty tiles can be replaced.
+							(!clickedPipe->IsStart()) &&	// Cannot replace starter tiles.
+							(m_numBombs > 0))				// Need bombs to replace existing pipe tiles.
+						{
+							replace = true;
+
+							// One bomb was used up.
+							m_numBombs--;
+
+							// Using bombs disables actions for a few more frames.
+							m_blockInteraction += framesInteractionBlocked;
+						}
+					}
+
+					if (replace)
 					{
 						// Grab the next piece in the queue, and...
 						TilePiece::Type newType = m_queue->Pop();
@@ -141,14 +171,7 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 						m_board->ReplaceTile(i, j, newType);
 
 						// To prevent accidental double-clicking disable actions for a few frames.
-						static constexpr int framesInteractionBlocked = 3;
-						m_blockInteraction = framesInteractionBlocked;
-					}
-
-					// Clicked on illegal tile! TODO: do something?
-					else
-					{
-
+						m_blockInteraction += framesInteractionBlocked;
 					}
 				}
 			}
@@ -167,6 +190,7 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 		m_board->Reset();
 		m_queue->Reset();
 		m_blockInteraction = 0;
+		m_numBombs = MAX_NUM_BOMBS;
 
 		// TODO find out if we levelled up
 		m_difficultyLevel += 1;
@@ -252,8 +276,8 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			case TilePiece::TYPE_START_N:
 				{
 					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
-											origin.getX(), 
+											origin.getY(),
+											origin.getX() + HALFTILE,
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
 				}
@@ -263,7 +287,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					line = juce::Line<int>(	origin.getX() + HALFTILE,
 											origin.getY() + HALFTILE,
-											origin.getX(), 
+											origin.getX() + HALFTILE,
 											origin.getY() + TILESIZE);
 					g.drawLine(line.toFloat(), pipeThickness);
 				}
@@ -441,7 +465,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					if (overHalf)
 					{
 						line = juce::Line<int>(	origin.getX() + HALFTILE, 
-												origin.getY() + HALFTILE - fill,
+												origin.getY() + TILESIZE - fill,
 												origin.getX() + HALFTILE,
 												origin.getY() + HALFTILE);
 						g.drawLine(line.toFloat(), oozeThickness);
@@ -787,5 +811,20 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				break;
 			}
 		}
+	}
+}
+
+void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
+{
+	for (int i = 0; i < MAX_NUM_BOMBS; i++)
+	{
+		if (i < m_numBombs)
+		{
+			g.setColour(juce::Colours::red);
+			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat());
+		}
+
+		g.setColour(juce::Colours::white);
+		g.drawEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat(), 1.0f);
 	}
 }

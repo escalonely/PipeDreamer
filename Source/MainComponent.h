@@ -6,6 +6,7 @@
 class Board;
 class Queue;
 class TilePiece;
+class Randomizer;
 class ScoreWindow;
 
 
@@ -31,6 +32,7 @@ public:
 	float GetCurrentOozePerPump() const;
 	void DrawTile(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
 	void DrawOoze(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
+	void DrawBombs(juce::Point<int> p, juce::Graphics& g);
 
 private:
 	Board* m_board;
@@ -38,6 +40,10 @@ private:
 	Queue* m_queue;
 
 	ScoreWindow* m_scoreWindow;
+
+	Randomizer* m_randomizer;
+
+	int m_numBombs;
 
 	/**
 	 * Level starts at 1, and as it increases, the amount of ooze pumped per frame also increases.
