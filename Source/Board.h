@@ -38,6 +38,8 @@ public:
 
 	void Reset();
 
+	void CreateRandomStart();
+
 	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) /*const*/; // TODO: const deadlock
 
 	int GetScore() const;

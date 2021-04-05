@@ -9,6 +9,9 @@
 */
 
 #include "Board.h"
+#include "Randomizer.h"
+//#include <vector>
+
 
 
 Board::Board(int numCols, int numRows)
@@ -20,23 +23,13 @@ Board::Board(int numCols, int numRows)
 	{
 		for (int j = 0; j < numRows; j++)
 		{
-			TilePiece* tile;
-			Coord coord(i, j);
+			TilePiece* tile = TilePiece::CreateTile();
 
-			// TODO: Set random starting tile position
-			if (i == 0 && j == 0)
-			{
-				m_oozingTile = TilePiece::CreateTile(TilePiece::TYPE_START_E);
-				tile = m_oozingTile;
-			}
-
-			// The rest are just empty tiles.
-			else
-				tile = TilePiece::CreateTile();
-			
-			m_tileMap[coord] = tile;
+			m_tileMap[Coord(i, j)] = tile;
 		}
 	}
+
+	CreateRandomStart();
 }
 
 Board::~Board()
@@ -143,11 +136,8 @@ void Board::Reset()
 		}
 	}
 
-	// TODO: Set random starting tile
-	Coord c(0, 0);
-	delete m_tileMap[c];
-	m_tileMap[c] = TilePiece::CreateTile(TilePiece::TYPE_START_E);
-	m_oozingTile = m_tileMap[c];
+	// Set random starting tile
+	CreateRandomStart();
 }
 
 TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
@@ -242,4 +232,30 @@ int Board::GetScore() const
 	}
 
 	return score;
+}
+
+void Board::CreateRandomStart()
+{
+	// Determine a random position on the board.
+	Randomizer* rand = Randomizer::GetInstance();
+	int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows));
+	Coord startCoord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
+
+	TilePiece::Type starterType;
+	bool search(true);
+	while (search)
+	{
+		// Get a random starter tile
+		starterType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_START_N, TilePiece::TYPE_START_W));
+
+		// Keep trying with random starter tiles until we find one which is not facing the wall.
+		search = (((startCoord.first <= 1) && (starterType == TilePiece::TYPE_START_W)) ||
+			((startCoord.first >= (m_numCols - 2)) && (starterType == TilePiece::TYPE_START_E)) ||
+			((startCoord.second <= 1) && (starterType == TilePiece::TYPE_START_N)) ||
+			((startCoord.second >= (m_numRows - 2)) && (starterType == TilePiece::TYPE_START_S)));
+	}
+
+	// Set starter tile.
+	ReplaceTile(startCoord.first, startCoord.second, starterType);
+	m_oozingTile = m_tileMap[startCoord];
 }

@@ -9,20 +9,17 @@
 */
 
 #include "Queue.h"
+#include "Randomizer.h"
 
 Queue::Queue(int size)
 {
 	m_buff.reserve(size);
+	Randomizer* rand = Randomizer::GetInstance();
 
-	// Seed randomizer
-	std::random_device rd;
-	m_mt = std::mt19937(rd());
-	m_dist = std::uniform_int_distribution<int>(TilePiece::TYPE_VERTICAL, TilePiece::TYPE_CROSS);
-
-	// Fill initial random queue
+	// Fill initial queue with random tiles, of any type between VERTICAL and CROSS.
 	for (int i = 0; i < size; ++i)
 	{
-		TilePiece::Type t(static_cast<TilePiece::Type>(m_dist(m_mt)));
+		TilePiece::Type t(static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_VERTICAL, TilePiece::TYPE_CROSS)));
 		m_buff.push_back(dynamic_cast<Pipe*>(TilePiece::CreateTile(t)));
 	}
 
@@ -39,11 +36,12 @@ Queue::~Queue()
 
 void Queue::Reset()
 {
+	Randomizer* rand = Randomizer::GetInstance();
 	for (int i = 0; i < m_buff.size(); ++i)
 	{
 		delete m_buff[i];
 
-		TilePiece::Type t(static_cast<TilePiece::Type>(m_dist(m_mt)));
+		TilePiece::Type t(static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_VERTICAL, TilePiece::TYPE_CROSS)));
 		m_buff[i] = dynamic_cast<Pipe*>(TilePiece::CreateTile(t));
 	}
 
@@ -74,10 +72,11 @@ TilePiece::Type Queue::Pop()
 	TilePiece::Type currentType(m_buff[m_readPos]->GetType());
 
 	// Randomize type of m_buff[m_readPos]
-	TilePiece::Type randomType(static_cast<TilePiece::Type>(m_dist(m_mt)));
+	Randomizer* rand = Randomizer::GetInstance();
+	TilePiece::Type t(static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_VERTICAL, TilePiece::TYPE_CROSS)));
 
 	delete m_buff[m_readPos];
-	m_buff[m_readPos] = dynamic_cast<Pipe*>(TilePiece::CreateTile(randomType));
+	m_buff[m_readPos] = dynamic_cast<Pipe*>(TilePiece::CreateTile(t));
 
 	// Move read position
 	m_readPos = (m_readPos + 1) % m_buff.size();

@@ -4,6 +4,8 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1">
   <MAINGROUP id="O96DaU" name="PipeDream">
     <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
+      <FILE id="KVUytk" name="Randomizer.cpp" compile="1" resource="0" file="Source/Randomizer.cpp"/>
+      <FILE id="id1vXB" name="Randomizer.h" compile="0" resource="0" file="Source/Randomizer.h"/>
       <FILE id="tzAdFP" name="ScoreWindow.cpp" compile="1" resource="0" file="Source/ScoreWindow.cpp"/>
       <FILE id="N77gbK" name="ScoreWindow.h" compile="0" resource="0" file="Source/ScoreWindow.h"/>
       <FILE id="xtOWpg" name="Board.cpp" compile="1" resource="0" file="Source/Board.cpp"/>

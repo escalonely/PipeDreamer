@@ -12,7 +12,6 @@
 
 #include "TilePiece.h"
 #include <vector>
-#include <random>
 
 class Queue
 {
@@ -34,7 +33,4 @@ public:
 protected:
 	std::vector<Pipe*> m_buff;
 	int m_readPos;
-
-	std::mt19937 m_mt;
-	std::uniform_int_distribution<int> m_dist;
 };
