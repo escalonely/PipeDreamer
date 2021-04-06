@@ -34,6 +34,10 @@ MainComponent::MainComponent()
 	//  to ensure it is deleted on shutdown.
 	m_randomizer = Randomizer::GetInstance();
 
+	// Reset the countdown to the start of the round
+	// (before ooze starts pumping out)
+	m_countDown = GetCurrentCountdown();
+
 	// GUI-refreh rate
 	startTimer(60);
 }
@@ -44,50 +48,6 @@ MainComponent::~MainComponent()
 	delete m_queue;
 	delete m_scoreWindow;
 	delete m_randomizer;
-}
-
-void MainComponent::paint(juce::Graphics& g)
-{
-	const juce::ScopedLock lock(m_lock);
-
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setFont (juce::Font (16.0f));
-    g.setColour (juce::Colours::white);
-    //g.drawText ("Hello World!", getLocalBounds(), juce::Justification::centred, true);
-
-	// Draw bombs
-	DrawBombs(juce::Point<int>(538, 20), g);
-
-	// Draw tile queue
-	static constexpr int queueVStartPos = 450;
-	static constexpr int queueHStartPos = 50;
-	for (int i = 0; i < m_queue->GetSize(); i++)
-	{
-		// Pipe shape
-		juce::Point<int> p(queueHStartPos, queueVStartPos - i * (TILESIZE - 0));
-		DrawTile((m_queue->GetTile(i)), p, g);
-
-		if (i == 0)
-		{
-			// Extra frame for the tile at the start of the queue.
-			g.setColour(juce::Colours::red);
-			g.drawRect(queueHStartPos, queueVStartPos - i * (TILESIZE - 0), TILESIZE, TILESIZE, 4);
-		}
-	}
-
-	// Draw board.
-	for (int i = 0; i < m_board->GetNumCols(); i++)
-	{
-		for (int j = 0; j < m_board->GetNumRows(); j++)
-		{
-			juce::Point<int> p(BOARD_HSTARTPOS + i * (TILESIZE - 1), BOARD_VSTARTPOS + j * (TILESIZE - 1));
-
-			DrawTile(m_board->GetTile(i, j), p, g);
-			DrawOoze(m_board->GetTile(i, j), p, g);
-		}
-	}
 }
 
 void MainComponent::resized()
@@ -103,20 +63,27 @@ void MainComponent::timerCallback()
 	if (m_blockInteraction > 0)
 		m_blockInteraction--;
 
-	// Pump more ooze into the board!
-	bool ok = m_board->Pump(GetCurrentOozePerPump());
-	if (!ok)
+	// Countdown to start pumping ooze.
+	if (m_countDown > 0)
+		m_countDown--;
+
+	else
 	{
-		// Ooze spill! This round if over, show scoreboard.
-		stopTimer();
+		// Pump more ooze into the board!
+		bool ok = m_board->Pump(GetCurrentOozePerPump());
+		if (!ok)
+		{
+			// Ooze spill! This round if over, show scoreboard.
+			stopTimer();
 
-		int score = m_board->GetScore();
+			int score = m_board->GetScore();
 
-		// Show scoreboard overlay.
-		m_scoreWindow = new ScoreWindow(score);
-		m_scoreWindow->addChangeListener(this);
-		addAndMakeVisible(m_scoreWindow);
-		m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 300));
+			// Show scoreboard overlay.
+			m_scoreWindow = new ScoreWindow(score);
+			m_scoreWindow->addChangeListener(this);
+			addAndMakeVisible(m_scoreWindow);
+			m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 300));
+		}
 	}
 
 	this->repaint();
@@ -195,6 +162,9 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 		// TODO find out if we levelled up
 		m_difficultyLevel += 1;
 
+		// Countdown to ooze pumping.
+		m_countDown = GetCurrentCountdown();
+
 		// GUI-refreh rate
 		startTimer(60);
 	}
@@ -232,7 +202,7 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 float MainComponent::GetCurrentOozePerPump() const
 {
 	static const float oozePerLevel[] = { 
-		0.6F, // Level 1
+		0.8F, // Level 1
 		0.7F, // Level 2
 		0.8F, // Level 3
 		0.9F, // Level 4
@@ -253,6 +223,80 @@ float MainComponent::GetCurrentOozePerPump() const
 		level = arraySize - 1;
 
 	return oozePerLevel[level];
+}
+
+int MainComponent::GetCurrentCountdown() const
+{
+	static const int countdownPerLevel[] = {
+		30, // Level 1
+		30, // Level 2
+		30, // Level 3
+		30, // Level 4
+		30, // Level 5
+		30, // Level 6
+		30, // Level 7
+		30, // Level 8
+		30, // Level 9
+		30, // Level 10
+		30, // Level 11
+		30  // Level 12
+	};
+
+	// m_difficultyLevel starts at 1
+	int arraySize = sizeof(countdownPerLevel) / sizeof(*countdownPerLevel);
+	int level = m_difficultyLevel - 1;
+	if (level >= arraySize)
+		level = arraySize - 1;
+
+	return countdownPerLevel[level];
+}
+
+void MainComponent::paint(juce::Graphics& g)
+{
+	const juce::ScopedLock lock(m_lock);
+
+	// (Our component is opaque, so we must completely fill the background with a solid colour)
+	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+
+	if (m_countDown > 0)
+	{
+		int tmp = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
+		g.setFont(juce::Font(200.0f));
+		g.setColour(juce::Colours::green);
+		g.drawText(juce::String(tmp), getLocalBounds(), juce::Justification::centred, true);
+	}
+
+	// Draw bombs
+	DrawBombs(juce::Point<int>(538, 20), g);
+
+	// Draw tile queue
+	static constexpr int queueVStartPos = 450;
+	static constexpr int queueHStartPos = 50;
+	for (int i = 0; i < m_queue->GetSize(); i++)
+	{
+		// Pipe shape
+		juce::Point<int> p(queueHStartPos, queueVStartPos - i * (TILESIZE - 0));
+		DrawTile((m_queue->GetTile(i)), p, g);
+
+		if (i == 0)
+		{
+			// Extra frame for the tile at the start of the queue.
+			g.setColour(juce::Colours::red);
+			g.drawRect(queueHStartPos, queueVStartPos - i * (TILESIZE - 0), TILESIZE, TILESIZE, 4);
+		}
+	}
+
+	// Draw board.
+	for (int i = 0; i < m_board->GetNumCols(); i++)
+	{
+		for (int j = 0; j < m_board->GetNumRows(); j++)
+		{
+			juce::Point<int> p(BOARD_HSTARTPOS + i * (TILESIZE - 1), BOARD_VSTARTPOS + j * (TILESIZE - 1));
+
+			DrawTile(m_board->GetTile(i, j), p, g);
+			DrawOoze(m_board->GetTile(i, j), p, g);
+		}
+	}
 }
 
 void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g)

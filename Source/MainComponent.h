@@ -30,6 +30,7 @@ public:
 
 	juce::Colour GetCurrentTileColor() const;
 	float GetCurrentOozePerPump() const;
+	int GetCurrentCountdown() const;
 	void DrawTile(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
 	void DrawOoze(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
 	void DrawBombs(juce::Point<int> p, juce::Graphics& g);
@@ -42,6 +43,8 @@ private:
 	ScoreWindow* m_scoreWindow;
 
 	Randomizer* m_randomizer;
+
+	int m_countDown;
 
 	int m_numBombs;
 
