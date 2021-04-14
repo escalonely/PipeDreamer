@@ -1,22 +1,45 @@
 /*
-  ==============================================================================
+===============================================================================
 
-    Board.cpp
-    Created: 26 Mar 2021 7:48:05pm
-    Author:  bernardoe
+Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  ==============================================================================
+  This file is part of the Pipe Dream clone found at:
+  https://github.com/escalonely/PipeDream
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===============================================================================
 */
+
 
 #include "Board.h"
 #include "Randomizer.h"
-//#include <vector>
 
 
 
 Board::Board(int numCols, int numRows)
 	:	m_numCols(numCols), 
-		m_numRows(numRows)
+		m_numRows(numRows),
+		m_score(0)
 {
 	// Fill the board with (empty) tiles.
 	for (int i = 0; i < numCols; i++)
@@ -93,6 +116,8 @@ bool Board::Pump(float amount)
 		oozingPipe->Pump(amount);
 		if (oozingPipe->IsFull())
 		{
+			m_score += oozingPipe->GetScoreValue();
+
 			Pipe::Direction outFlowDir = oozingPipe->GetFlowDirection();
 			Pipe::Direction inFlowDir = Pipe::GetOppositeDirection(outFlowDir);
 
@@ -126,6 +151,8 @@ bool Board::Pump(float amount)
 
 void Board::Reset()
 {
+	m_score = 0;
+
 	// Clear all tiles
 	for (int i = 0; i < GetNumCols(); i++)
 	{
@@ -186,52 +213,7 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 
 int Board::GetScore() const
 {
-	int score(0);
-
-	for (int i = 0; i < GetNumCols(); i++)
-	{
-		for (int j = 0; j < GetNumRows(); j++)
-		{
-			Coord c(i, j);
-
-			switch (m_tileMap.at(c)->GetType())
-			{
-			case TilePiece::TYPE_VERTICAL:
-			case TilePiece::TYPE_HORIZONTAL:
-			case TilePiece::TYPE_NW_ELBOW:
-			case TilePiece::TYPE_NE_ELBOW:
-			case TilePiece::TYPE_SE_ELBOW:
-			case TilePiece::TYPE_SW_ELBOW:
-				{
-					Pipe* pipe = dynamic_cast<Pipe*>(m_tileMap.at(c));
-					if (pipe->IsFull())
-						score += 100;
-				}
-				break;
-			case TilePiece::TYPE_CROSS:
-				{
-					// Cross tile awards normal points if only one way is full.
-					Cross* cross = dynamic_cast<Cross*>(m_tileMap.at(c));
-					if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) >= MAX_OOZE_LEVEL) && 
-						(cross->GetOozeLevel(Cross::WAY_VERTICAL) < MAX_OOZE_LEVEL))
-						score += 100;
-					else if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) < MAX_OOZE_LEVEL) &&
-						(cross->GetOozeLevel(Cross::WAY_VERTICAL) >= MAX_OOZE_LEVEL))
-						score += 100;
-
-					// If both ways are full, give bonus points!
-					else if ((cross->GetOozeLevel(Cross::WAY_HORIZONTAL) >= MAX_OOZE_LEVEL) &&
-						(cross->GetOozeLevel(Cross::WAY_VERTICAL) >= MAX_OOZE_LEVEL))
-						score += 300;
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	return score;
+	return m_score;
 }
 
 void Board::CreateRandomStart()
