@@ -1,3 +1,34 @@
+/*
+===============================================================================
+
+Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+
+  This file is part of the Pipe Dream clone found at:
+  https://github.com/escalonely/PipeDream
+
+Redistribution and use in source and binary forms, with or without modification, 
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, 
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, 
+this list of conditions and the following disclaimer in the documentation and/or 
+other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===============================================================================
+*/
 
 
 #include "MainComponent.h"
@@ -14,11 +45,13 @@ static constexpr int BOARD_HSTARTPOS = 175;
 
 static constexpr int MAX_NUM_BOMBS = 5;
 
+static constexpr int MIN_SCORE_TO_ADVANCE = 1;
+
 
 MainComponent::MainComponent()
 	:	m_blockInteraction(0),
 		m_difficultyLevel(1),
-		m_cummulativeScore(0),
+		m_cumulativeScore(0),
 		m_scoreWindow(nullptr),
 		m_numBombs(MAX_NUM_BOMBS)
 {
@@ -76,10 +109,20 @@ void MainComponent::timerCallback()
 			// Ooze spill! This round if over, show scoreboard.
 			stopTimer();
 
-			int score = m_board->GetScore();
+			ScoreWindow::ScoreDetails details;
+			details.score = m_board->GetScore();
+
+			// Add score gained to the cumulative score.
+			m_cumulativeScore += details.score;
+			details.cmlScore = m_cumulativeScore;
+
+			// If score is high enough, score window offers 
+			// a button to continue to next level.
+			details.level = m_difficultyLevel;
+			details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
 
 			// Show scoreboard overlay.
-			m_scoreWindow = new ScoreWindow(score);
+			m_scoreWindow = new ScoreWindow(details);
 			m_scoreWindow->addChangeListener(this);
 			addAndMakeVisible(m_scoreWindow);
 			m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 300));
@@ -150,7 +193,8 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	(void)source;
 
-	//ScoreWindow::Command cmd(ScoreWindow::CMD_QUIT);
+	// TODO: handle ScoreWindow::Command cmd(ScoreWindow::CMD_QUIT);
+
 	if ((m_scoreWindow != nullptr) &&
 		(m_scoreWindow->GetCommand() == ScoreWindow::CMD_CONTINUE))
 	{
@@ -202,18 +246,18 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 float MainComponent::GetCurrentOozePerPump() const
 {
 	static const float oozePerLevel[] = { 
-		0.8F, // Level 1
-		0.7F, // Level 2
-		0.8F, // Level 3
-		0.9F, // Level 4
-		1.0F, // Level 5
-		1.1F, // Level 6
-		1.2F, // Level 7
-		1.3F, // Level 8
-		1.4F, // Level 9
-		1.5F, // Level 10
-		1.6F, // Level 11
-		1.7F  // Level 12
+		1.8F, // Level 1
+		1.7F, // Level 2
+		1.8F, // Level 3
+		1.9F, // Level 4
+		2.0F, // Level 5
+		2.1F, // Level 6
+		2.2F, // Level 7
+		2.3F, // Level 8
+		2.4F, // Level 9
+		2.5F, // Level 10
+		2.6F, // Level 11
+		2.7F  // Level 12
 	};
 
 	// m_difficultyLevel starts at 1
@@ -228,18 +272,18 @@ float MainComponent::GetCurrentOozePerPump() const
 int MainComponent::GetCurrentCountdown() const
 {
 	static const int countdownPerLevel[] = {
-		30, // Level 1
-		30, // Level 2
-		30, // Level 3
-		30, // Level 4
-		30, // Level 5
-		30, // Level 6
-		30, // Level 7
-		30, // Level 8
-		30, // Level 9
-		30, // Level 10
-		30, // Level 11
-		30  // Level 12
+		60, // Level 1
+		60, // Level 2
+		60, // Level 3
+		60, // Level 4
+		60, // Level 5
+		60, // Level 6
+		60, // Level 7
+		60, // Level 8
+		60, // Level 9
+		60, // Level 10
+		60, // Level 11
+		60  // Level 12
 	};
 
 	// m_difficultyLevel starts at 1
@@ -258,12 +302,22 @@ void MainComponent::paint(juce::Graphics& g)
 	// (Our component is opaque, so we must completely fill the background with a solid colour)
 	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
 
+	// Draw countdown
 	if (m_countDown > 0)
 	{
 		int tmp = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
 		g.setFont(juce::Font(200.0f));
 		g.setColour(juce::Colours::green);
 		g.drawText(juce::String(tmp), getLocalBounds(), juce::Justification::centred, true);
+	}
+
+	// Draw score
+	{
+		juce::String scoreStr = juce::String::formatted("Level: %d  Score: %d", m_difficultyLevel, m_board->GetScore());
+		g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
+		g.setColour(juce::Colours::grey);
+		g.drawText(scoreStr, juce::Rectangle<int>(BOARD_HSTARTPOS, 20, 400, HALFTILE), juce::Justification::left, false);
+		//g.drawRect(juce::Rectangle<int>(BOARD_HSTARTPOS, 20, 400, HALFTILE), 1.0f);
 	}
 
 	// Draw bombs
@@ -315,6 +369,12 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			juce::Line<int> line;
 			g.setColour(juce::Colours::black);
 
+			// Ellipse rect used to have nice rounded corners in the elbow pipes.
+			juce::Rectangle<float> elbowJoint(	origin.getX() + HALFTILE - (pipeThickness / 2),
+												origin.getY() + HALFTILE - (pipeThickness / 2),
+												pipeThickness, 
+												pipeThickness);
+
 			switch (pipe->GetType())
 			{
 			case TilePiece::TYPE_START_N:
@@ -324,6 +384,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + HALFTILE,
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -334,6 +395,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + HALFTILE,
 											origin.getY() + TILESIZE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -344,6 +406,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + TILESIZE, 
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -354,6 +417,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX(), 
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -389,6 +453,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + HALFTILE,
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -404,6 +469,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + TILESIZE, 
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -419,6 +485,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + TILESIZE, 
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
@@ -434,6 +501,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 											origin.getX() + HALFTILE, 
 											origin.getY() + HALFTILE);
 					g.drawLine(line.toFloat(), pipeThickness);
+					g.fillEllipse(elbowJoint);
 				}
 				break;
 
