@@ -1,11 +1,33 @@
 /*
-  ==============================================================================
+===============================================================================
 
-    TilePiece.h
-    Created: 26 Mar 2021 7:45:11pm
-    Author:  bernardoe
+Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  ==============================================================================
+  This file is part of the Pipe Dream clone found at:
+  https://github.com/escalonely/PipeDream
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===============================================================================
 */
 
 #pragma once
@@ -50,6 +72,8 @@ public:
 	Type GetType() const;
 
 	bool IsStart() const;
+
+	virtual int GetScoreValue() const;
 
 protected:
 	void SetType(Type t);
@@ -100,6 +124,8 @@ public:
 
 	int PopExplosion();
 
+	int GetScoreValue() const override;
+
 protected:
 	/**
 	 * TODO
@@ -135,15 +161,17 @@ public:
 
 	Cross();
 
-	virtual float Pump(float amount) override;
+	float Pump(float amount) override;
 
 	float GetOozeLevel(Way w) const;
 
-	virtual bool IsFull() const override;
+	bool IsFull() const override;
 
-	virtual bool IsEmpty() const override;
+	bool IsEmpty() const override;
 
-	virtual bool SetFlowEntry(Pipe::Direction dir) override;
+	bool SetFlowEntry(Pipe::Direction dir) override;
+
+	int GetScoreValue() const override;
 
 
 protected:

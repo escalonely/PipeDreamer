@@ -1,12 +1,35 @@
 /*
-  ==============================================================================
+===============================================================================
 
-    TilePiece.cpp
-    Created: 26 Mar 2021 7:45:11pm
-    Author:  bernardoe
+Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  ==============================================================================
+  This file is part of the Pipe Dream clone found at:
+  https://github.com/escalonely/PipeDream
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===============================================================================
 */
+
 
 #include "TilePiece.h"
 #include <assert.h>
@@ -84,6 +107,11 @@ bool TilePiece::IsStart() const
 	}
 
 	return false;
+}
+
+int TilePiece::GetScoreValue() const
+{
+	return 0;
 }
 
 
@@ -323,6 +351,34 @@ int Pipe::PopExplosion()
 	return m_exploding;
 }
 
+int Pipe::GetScoreValue() const
+{
+	switch (m_type)
+	{
+	case TYPE_VERTICAL:
+	case TYPE_HORIZONTAL:
+	case TYPE_NW_ELBOW:
+	case TYPE_NE_ELBOW:
+	case TYPE_SE_ELBOW:
+	case TYPE_SW_ELBOW:
+		{
+			// All pipes, except for starter pipes, give 
+			// normal score value if full.
+			if (IsFull())
+			{
+				return 100;
+			}
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+
 
 /****************************************************************
 * Cross
@@ -426,4 +482,18 @@ bool Cross::SetFlowEntry(Pipe::Direction dir)
 		m_flowDirection = Pipe::GetOppositeDirection(dir);
 
 	return ret;
+}
+
+int Cross::GetScoreValue() const
+{
+	// TODO explain
+	if ((m_horizOozeLevel >= MAX_OOZE_LEVEL) &&
+		(m_vertOozeLevel >= MAX_OOZE_LEVEL))
+		return 200;
+
+	if ((m_horizOozeLevel >= MAX_OOZE_LEVEL) ||
+		(m_vertOozeLevel >= MAX_OOZE_LEVEL))
+		return 100;
+
+	return 0;
 }
