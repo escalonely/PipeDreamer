@@ -1,19 +1,44 @@
 /*
+===============================================================================
 
+Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+
+  This file is part of the Pipe Dream clone found at:
+  https://github.com/escalonely/PipeDream
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===============================================================================
 */
+
 
 #include <JuceHeader.h>
 #include "ScoreWindow.h"
 #include "MainComponent.h"
 
-ScoreWindow::ScoreWindow(int score)
-	:	m_score(score),
+ScoreWindow::ScoreWindow(ScoreDetails details)
+	:	m_details(details),
 		m_command(CMD_NONE)
 {
-	//setSize(300, 200);
-    // In your constructor, you should add any child components, and
-    // initialise any special settings that your component needs.
-
 }
 
 ScoreWindow::~ScoreWindow()
@@ -22,26 +47,24 @@ ScoreWindow::~ScoreWindow()
 
 void ScoreWindow::paint (juce::Graphics& g)
 {
-    /* This demo code just fills the component's background and
-       draws some placeholder text to get you started.
+	// Background color
+    g.fillAll(getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
 
-       You should replace everything in this method with your own
-       drawing code..
-    */
+	// Frame
+	g.setColour(juce::Colours::grey);
+	juce::Rectangle<int> rect(	getLocalBounds().getX() + 5, getLocalBounds().getY() + 5, 
+								getLocalBounds().getWidth() - 10, getLocalBounds().getHeight() - 10);
+	g.drawRect(rect, 2);
 
-    g.fillAll(getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));   // clear the background
+	// Display score
+	juce::String scoreStr = juce::String::formatted("Score: %d \nTotal Score: %d000", m_details.score, m_details.cmlScore);
+	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
+	rect = juce::Rectangle<int>(getLocalBounds().getX() + 5, getLocalBounds().getY() + 5, 
+								getLocalBounds().getWidth() - 10, getLocalBounds().getHeight() / 2);
+    g.drawFittedText(scoreStr, rect, juce::Justification::centred, true);
+	g.drawRect(rect);
 
-    g.setColour(juce::Colours::grey);
-    g.drawRect(getLocalBounds(), 2);   // draw an outline around the component
-
-	juce::String scoreText;
-	scoreText << "Score: ";
-	scoreText << m_score;
-	scoreText << "\nClick to continue.";
-
-    g.setColour(juce::Colours::white);
-    g.setFont(14.0f);
-    g.drawText(scoreText, getLocalBounds(), juce::Justification::centred, true);
+	// TODO: buttons
 }
 
 void ScoreWindow::resized()
