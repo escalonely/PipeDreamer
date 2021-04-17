@@ -45,7 +45,9 @@ public:
 	struct ScoreDetails
 	{
 		int score;
-		int cmlScore;
+		int bonus;
+		int carryover;
+		int total;
 		int level;
 		bool advance;
 	};
@@ -54,6 +56,7 @@ public:
 	{
 		CMD_NONE = 0,
 		CMD_QUIT,
+		CMD_RESTART,
 		CMD_CONTINUE
 	};
 

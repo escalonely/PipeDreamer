@@ -47,44 +47,71 @@ ScoreWindow::~ScoreWindow()
 
 void ScoreWindow::paint (juce::Graphics& g)
 {
+	int width = getLocalBounds().getWidth();
+	int buttonHeight = getLocalBounds().getHeight() / 5;
+
+	juce::String messageText("You Lose! :(\n");
+	juce::String buttonText("Restart Game");
+	if (m_details.advance)
+	{
+		messageText = juce::String("You Leveled Up!\n");
+		buttonText = juce::String("Continue to Next Level");
+	}
+
 	// Background color
-    g.fillAll(getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+	g.fillAll(juce::Colour(27, 27, 27));
 
 	// Frame
 	g.setColour(juce::Colours::grey);
-	juce::Rectangle<int> rect(	getLocalBounds().getX() + 5, getLocalBounds().getY() + 5, 
-								getLocalBounds().getWidth() - 10, getLocalBounds().getHeight() - 10);
+	juce::Rectangle<int> rect(5, 5, width - 10, getLocalBounds().getHeight() - 10);
 	g.drawRect(rect, 2);
 
 	// Display score
-	juce::String scoreStr = juce::String::formatted("Score: %d \nTotal Score: %d000", m_details.score, m_details.cmlScore);
+	messageText << juce::String::formatted("Score: %d\nLevel Bonus: %d\nCarry Over: %d\nTotal: %d", 
+											m_details.score, m_details.bonus, m_details.carryover, m_details.total);
 	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
-	rect = juce::Rectangle<int>(getLocalBounds().getX() + 5, getLocalBounds().getY() + 5, 
-								getLocalBounds().getWidth() - 10, getLocalBounds().getHeight() / 2);
-    g.drawFittedText(scoreStr, rect, juce::Justification::centred, true);
+	rect = juce::Rectangle<int>(5, 5, width - 10, buttonHeight * 3);
+    g.drawFittedText(messageText, rect, juce::Justification::centred, true);
+	//g.drawRect(rect);
+
+	// Continue button
+	rect = juce::Rectangle<int>(10, (buttonHeight * 3) + 5, width - 20, buttonHeight - 10);
+	g.drawFittedText(buttonText, rect, juce::Justification::centred, true);
 	g.drawRect(rect);
 
-	// TODO: buttons
+	// Quit button
+	rect = juce::Rectangle<int>(10, (buttonHeight * 4) - 0, width - 20, buttonHeight - 10);
+    g.drawFittedText("Quit", rect, juce::Justification::centred, true);
+	g.drawRect(rect);
 }
 
 void ScoreWindow::resized()
 {
-    // This method is where you should set the bounds of any child
-    // components that your component contains..
-
 }
 
 void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 {
-	//MainComponent* mc = dynamic_cast<MainComponent*>(getParentComponent());
-	//if (mc != nullptr)
-	//{
+	int width = getLocalBounds().getWidth();
+	int buttonHeight = getLocalBounds().getHeight() / 5;
 
-	//}
+	juce::Point<int> clickPos = event.getMouseDownPosition();
+	juce::Rectangle<int> continueRect(10, (buttonHeight * 3) + 5, width - 20, buttonHeight - 10);
+	juce::Rectangle<int> quitRect(10, (buttonHeight * 4) - 0, width - 20, buttonHeight - 10);
 
-	m_command = CMD_CONTINUE;
+	if (continueRect.contains(clickPos))
+	{
+		if (m_details.advance)
+			m_command = CMD_CONTINUE;
+		else
+			m_command = CMD_RESTART;
+	}
 
-	sendChangeMessage();
+	else if (quitRect.contains(clickPos))
+		m_command = CMD_QUIT;
+
+	// If a button was clicked, send a callback.
+	if (m_command != CMD_NONE)
+		sendChangeMessage();
 }
 
 ScoreWindow::Command ScoreWindow::GetCommand() const
