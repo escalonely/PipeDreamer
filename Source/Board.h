@@ -65,7 +65,7 @@ public:
 
 	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) /*const*/; // TODO: const deadlock
 
-	int GetScore() const;
+	int GetScoreBase() const;
 
 protected:
 	TilePiece* m_oozingTile;
@@ -77,5 +77,5 @@ protected:
 	std::map<Coord, TilePiece*> m_tileMap;
 
 
-	int m_score;
+	int m_scoreBase;
 };

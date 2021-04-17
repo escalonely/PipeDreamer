@@ -109,7 +109,7 @@ bool TilePiece::IsStart() const
 	return false;
 }
 
-int TilePiece::GetScoreValue() const
+int TilePiece::GetScoreBase() const
 {
 	return 0;
 }
@@ -351,7 +351,7 @@ int Pipe::PopExplosion()
 	return m_exploding;
 }
 
-int Pipe::GetScoreValue() const
+int Pipe::GetScoreBase() const
 {
 	switch (m_type)
 	{
@@ -366,7 +366,7 @@ int Pipe::GetScoreValue() const
 			// normal score value if full.
 			if (IsFull())
 			{
-				return 100;
+				return 1;
 			}
 		}
 		break;
@@ -484,16 +484,16 @@ bool Cross::SetFlowEntry(Pipe::Direction dir)
 	return ret;
 }
 
-int Cross::GetScoreValue() const
+int Cross::GetScoreBase() const
 {
 	// TODO explain
 	if ((m_horizOozeLevel >= MAX_OOZE_LEVEL) &&
 		(m_vertOozeLevel >= MAX_OOZE_LEVEL))
-		return 200;
+		return 2;
 
 	if ((m_horizOozeLevel >= MAX_OOZE_LEVEL) ||
 		(m_vertOozeLevel >= MAX_OOZE_LEVEL))
-		return 100;
+		return 1;
 
 	return 0;
 }

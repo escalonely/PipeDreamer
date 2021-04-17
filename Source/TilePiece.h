@@ -73,7 +73,7 @@ public:
 
 	bool IsStart() const;
 
-	virtual int GetScoreValue() const;
+	virtual int GetScoreBase() const;
 
 protected:
 	void SetType(Type t);
@@ -124,7 +124,7 @@ public:
 
 	int PopExplosion();
 
-	int GetScoreValue() const override;
+	int GetScoreBase() const override;
 
 protected:
 	/**
@@ -171,7 +171,7 @@ public:
 
 	bool SetFlowEntry(Pipe::Direction dir) override;
 
-	int GetScoreValue() const override;
+	int GetScoreBase() const override;
 
 
 protected:

@@ -39,7 +39,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 Board::Board(int numCols, int numRows)
 	:	m_numCols(numCols), 
 		m_numRows(numRows),
-		m_score(0)
+		m_scoreBase(0)
 {
 	// Fill the board with (empty) tiles.
 	for (int i = 0; i < numCols; i++)
@@ -116,7 +116,7 @@ bool Board::Pump(float amount)
 		oozingPipe->Pump(amount);
 		if (oozingPipe->IsFull())
 		{
-			m_score += oozingPipe->GetScoreValue();
+			m_scoreBase += oozingPipe->GetScoreBase();
 
 			Pipe::Direction outFlowDir = oozingPipe->GetFlowDirection();
 			Pipe::Direction inFlowDir = Pipe::GetOppositeDirection(outFlowDir);
@@ -151,7 +151,7 @@ bool Board::Pump(float amount)
 
 void Board::Reset()
 {
-	m_score = 0;
+	m_scoreBase = 0;
 
 	// Clear all tiles
 	for (int i = 0; i < GetNumCols(); i++)
@@ -211,9 +211,9 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 	return ret;
 }
 
-int Board::GetScore() const
+int Board::GetScoreBase() const
 {
-	return m_score;
+	return m_scoreBase;
 }
 
 void Board::CreateRandomStart()
@@ -223,7 +223,7 @@ void Board::CreateRandomStart()
 	int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows));
 	Coord startCoord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
 
-	TilePiece::Type starterType;
+	TilePiece::Type starterType(TilePiece::TYPE_NONE);
 	bool search(true);
 	while (search)
 	{
