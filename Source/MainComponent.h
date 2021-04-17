@@ -90,5 +90,21 @@ private:
 
 	juce::CriticalSection m_lock;
 
+	/**
+	 * Points gained in one round, necessary to advance to the next difficulty level.
+	 */
+	static const int MIN_SCORE_TO_ADVANCE;
+
+	/**
+	 * Max number of bombs available per round, used to replace existing pipe tiles.
+	 */
+	static const int MAX_NUM_BOMBS;
+
+	/**
+	 * The Board and the TilePieces only know about their base score value. To obtain 
+	 * the actual player score, this is multiplied by the score multiplier.
+	 */
+	static const int SCORE_MULTIPLIER;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

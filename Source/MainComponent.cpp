@@ -39,14 +39,17 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static constexpr int TILESIZE = 70;
 static constexpr int HALFTILE = TILESIZE / 2;
-
 static constexpr int BOARD_VSTARTPOS = 80;
 static constexpr int BOARD_HSTARTPOS = 175;
 
-static constexpr int MAX_NUM_BOMBS = 5;
+// ---- Helper types and constants ----
 
-static constexpr int MIN_SCORE_TO_ADVANCE = 1;
+const int MainComponent::MAX_NUM_BOMBS(5);
+const int MainComponent::MIN_SCORE_TO_ADVANCE(2000);
+const int MainComponent::SCORE_MULTIPLIER(100);
 
+
+// ---- Class Implementation ----
 
 MainComponent::MainComponent()
 	:	m_blockInteraction(0),
@@ -110,11 +113,19 @@ void MainComponent::timerCallback()
 			stopTimer();
 
 			ScoreWindow::ScoreDetails details;
-			details.score = m_board->GetScore();
+			details.score = m_board->GetScoreBase() * SCORE_MULTIPLIER;
+
+			// Carryover is the score gained from all previous levels.
+			details.carryover = m_cumulativeScore;
+
+			// Add level-based bonus. This mechanic helps ensure that players
+			// who make it further into the game end up with higher score than 
+			// players who just manage a very long pipe on level 1.
+			details.bonus = m_difficultyLevel * SCORE_MULTIPLIER;
 
 			// Add score gained to the cumulative score.
-			m_cumulativeScore += details.score;
-			details.cmlScore = m_cumulativeScore;
+			details.total = details.score + details.bonus + details.carryover;
+			m_cumulativeScore = details.total;
 
 			// If score is high enough, score window offers 
 			// a button to continue to next level.
@@ -125,7 +136,7 @@ void MainComponent::timerCallback()
 			m_scoreWindow = new ScoreWindow(details);
 			m_scoreWindow->addChangeListener(this);
 			addAndMakeVisible(m_scoreWindow);
-			m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 300));
+			m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 320));
 		}
 	}
 
@@ -193,45 +204,64 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	(void)source;
 
-	// TODO: handle ScoreWindow::Command cmd(ScoreWindow::CMD_QUIT);
-
-	if ((m_scoreWindow != nullptr) &&
-		(m_scoreWindow->GetCommand() == ScoreWindow::CMD_CONTINUE))
+	if (m_scoreWindow != nullptr)
 	{
-		m_board->Reset();
-		m_queue->Reset();
-		m_blockInteraction = 0;
-		m_numBombs = MAX_NUM_BOMBS;
+		switch (m_scoreWindow->GetCommand())
+		{
+			case ScoreWindow::CMD_RESTART:
+			case ScoreWindow::CMD_CONTINUE:
+			{
+				m_board->Reset();
+				m_queue->Reset();
+				m_blockInteraction = 0;
+				m_numBombs = MAX_NUM_BOMBS;
 
-		// TODO find out if we levelled up
-		m_difficultyLevel += 1;
+				// If re restart at lvl 1, clear total score
+				if (m_scoreWindow->GetCommand() == ScoreWindow::CMD_RESTART)
+				{
+					m_difficultyLevel = 1;
+					m_cumulativeScore = 0;
+				}
 
-		// Countdown to ooze pumping.
-		m_countDown = GetCurrentCountdown();
+				// Or advance to the next level
+				else
+					m_difficultyLevel += 1;
 
-		// GUI-refreh rate
-		startTimer(60);
+				// Countdown to ooze pumping.
+				m_countDown = GetCurrentCountdown();
+
+				// Restart GUI
+				startTimer(60);
+			}
+			break;
+
+			case ScoreWindow::CMD_QUIT:
+			{
+				juce::JUCEApplicationBase::quit();
+			}
+			break;
+		}
+
+		delete m_scoreWindow;
+		m_scoreWindow = nullptr;
 	}
-
-	delete m_scoreWindow;
-	m_scoreWindow = nullptr;
 }
 
 juce::Colour MainComponent::GetCurrentTileColor() const
 {
 	static const juce::Colour colorsPerLevel[] = {
-		juce::Colours::grey,		   // Level 1
-		juce::Colours::cadetblue,	   // Level 2
-		juce::Colours::darkkhaki,	   // Level 3
-		juce::Colours::darkolivegreen, // Level 4
-		juce::Colours::darkslategrey,  // Level 5
-		juce::Colours::rosybrown,	   // Level 6
-		juce::Colours::dimgrey,		   // Level 7
-		juce::Colours::lightslategrey, // Level 8
-		juce::Colours::lightsteelblue, // Level 9
-		juce::Colours::olivedrab,	   // Level 10
-		juce::Colours::slategrey,	   // Level 11
-		juce::Colours::pink,		   // Level 12
+		juce::Colour(125, 125, 125),	// Level 1
+		juce::Colours::cadetblue,		// Level 2
+		juce::Colours::darkkhaki,		// Level 3
+		juce::Colour(140, 180, 90),		// Level 4
+		juce::Colours::darkslategrey,	// Level 5
+		juce::Colours::rosybrown,		// Level 6
+		juce::Colour(27, 122, 165),		// Level 7
+		juce::Colours::lightslategrey,	// Level 8
+		juce::Colours::blueviolet,		// Level 9
+		juce::Colours::darkorange,		// Level 10
+		juce::Colours::mediumseagreen,	// Level 11
+		juce::Colours::orangered,		// Level 12
 	};
 
 	// m_difficultyLevel starts at 1
@@ -246,18 +276,18 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 float MainComponent::GetCurrentOozePerPump() const
 {
 	static const float oozePerLevel[] = { 
-		1.8F, // Level 1
-		1.7F, // Level 2
-		1.8F, // Level 3
-		1.9F, // Level 4
-		2.0F, // Level 5
-		2.1F, // Level 6
-		2.2F, // Level 7
-		2.3F, // Level 8
-		2.4F, // Level 9
-		2.5F, // Level 10
-		2.6F, // Level 11
-		2.7F  // Level 12
+		1.2F, // Level 1
+		1.3F, // Level 2
+		1.4F, // Level 3
+		1.5F, // Level 4
+		1.6F, // Level 5
+		1.8F, // Level 6
+		2.0F, // Level 7
+		2.2F, // Level 8
+		2.5F, // Level 9
+		3.0F, // Level 10
+		3.5F, // Level 11
+		5.0F  // Level 12
 	};
 
 	// m_difficultyLevel starts at 1
@@ -272,18 +302,18 @@ float MainComponent::GetCurrentOozePerPump() const
 int MainComponent::GetCurrentCountdown() const
 {
 	static const int countdownPerLevel[] = {
-		60, // Level 1
-		60, // Level 2
-		60, // Level 3
-		60, // Level 4
-		60, // Level 5
-		60, // Level 6
-		60, // Level 7
-		60, // Level 8
-		60, // Level 9
-		60, // Level 10
-		60, // Level 11
-		60  // Level 12
+		280,	// Level 1
+		260,	// Level 2
+		240,	// Level 3
+		220,	// Level 4
+		200,	// Level 5
+		180,	// Level 6
+		160,	// Level 7
+		140,	// Level 8
+		120,	// Level 9
+		100,	// Level 10
+		80,		// Level 11
+		60		// Level 12
 	};
 
 	// m_difficultyLevel starts at 1
@@ -299,25 +329,48 @@ void MainComponent::paint(juce::Graphics& g)
 {
 	const juce::ScopedLock lock(m_lock);
 
-	// (Our component is opaque, so we must completely fill the background with a solid colour)
-	g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+	// Background colour
+	g.fillAll(juce::Colour(67, 67, 67));
 
 	// Draw countdown
 	if (m_countDown > 0)
 	{
-		int tmp = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
-		g.setFont(juce::Font(200.0f));
-		g.setColour(juce::Colours::green);
-		g.drawText(juce::String(tmp), getLocalBounds(), juce::Justification::centred, true);
+		int seconds = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
+		g.setFont(juce::Font("consolas", 200.0f, juce::Font::plain));
+		g.setColour(juce::Colours::yellow);
+		g.drawText(juce::String(seconds), juce::Rectangle<int>(30, 30, 100, 100), juce::Justification::centred, true);
 	}
 
-	// Draw score
+	// Draw current level number and score
 	{
-		juce::String scoreStr = juce::String::formatted("Level: %d  Score: %d", m_difficultyLevel, m_board->GetScore());
+		int playerScore = m_board->GetScoreBase() * SCORE_MULTIPLIER;
+
 		g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
 		g.setColour(juce::Colours::grey);
-		g.drawText(scoreStr, juce::Rectangle<int>(BOARD_HSTARTPOS, 20, 400, HALFTILE), juce::Justification::left, false);
-		//g.drawRect(juce::Rectangle<int>(BOARD_HSTARTPOS, 20, 400, HALFTILE), 1.0f);
+
+		juce::Rectangle<int> textRect(BOARD_HSTARTPOS, 20, 92, HALFTILE);
+		g.drawText("Level:", textRect, juce::Justification::left, false);
+		//g.drawRect(textRect, 1.0f);
+
+		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52, 20, 92, HALFTILE);
+		g.drawText("Score:", textRect, juce::Justification::left, false);
+		//g.drawRect(textRect, 1.0f);
+
+		// If score this round is high enough to advance to next difficulty level, highlight the number.
+		if (playerScore >= MIN_SCORE_TO_ADVANCE)
+		{
+			g.setColour(juce::Colours::yellow);
+			g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
+		}
+		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52 + 92, 20, 160, HALFTILE);
+		g.drawText(juce::String(playerScore), textRect, juce::Justification::left, false);
+		//g.drawRect(textRect, 1.0f);
+
+		// Show difficulty level number in this level's tile color.
+		g.setColour(GetCurrentTileColor());
+		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92, 20, 52, HALFTILE);
+		g.drawText(juce::String(m_difficultyLevel), textRect, juce::Justification::left, false);
+		//g.drawRect(textRect, 1.0f);
 	}
 
 	// Draw bombs
@@ -570,6 +623,13 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			juce::Line<int> line;
 			g.setColour(juce::Colours::limegreen);
 
+			// Ellipse rect used to have nice rounded corners in the elbow pipes.
+			juce::Rectangle<float> elbowJoint(	origin.getX() + HALFTILE - (oozeThickness / 2),
+												origin.getY() + HALFTILE - (oozeThickness / 2),
+												oozeThickness, 
+												oozeThickness);
+
+
 			switch (pipe->GetType())
 			{
 			case TilePiece::TYPE_START_N:
@@ -581,6 +641,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 												origin.getX() + HALFTILE,
 												origin.getY() + HALFTILE);
 						g.drawLine(line.toFloat(), oozeThickness);
+						g.fillEllipse(elbowJoint);
 					}
 				}
 				break;
@@ -594,6 +655,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 												origin.getX() + HALFTILE,
 												origin.getY() + fill);
 						g.drawLine(line.toFloat(), oozeThickness);
+						g.fillEllipse(elbowJoint);
 					}
 				}
 				break;
@@ -607,6 +669,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 												origin.getX() + fill, 
 												origin.getY() + HALFTILE);
 						g.drawLine(line.toFloat(), oozeThickness);
+						g.fillEllipse(elbowJoint);
 					}
 				}
 				break;
@@ -620,6 +683,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 												origin.getX() + HALFTILE,
 												origin.getY() + HALFTILE);
 						g.drawLine(line.toFloat(), oozeThickness);
+						g.fillEllipse(elbowJoint);
 					}
 				}
 				break;
@@ -682,6 +746,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 					else if (pipe->GetFlowDirection() == Pipe::DIR_W)
@@ -706,6 +771,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 				}
@@ -735,6 +801,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 					else if (pipe->GetFlowDirection() == Pipe::DIR_E)
@@ -759,6 +826,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + fill, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 				}
@@ -788,6 +856,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 					else if (pipe->GetFlowDirection() == Pipe::DIR_E)
@@ -812,6 +881,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + fill, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 				}
@@ -841,6 +911,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 					else if (pipe->GetFlowDirection() == Pipe::DIR_W)
@@ -865,6 +936,7 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 													origin.getX() + HALFTILE, 
 													origin.getY() + HALFTILE);
 							g.drawLine(line.toFloat(), oozeThickness);
+							g.fillEllipse(elbowJoint);
 						}
 					}
 				}
