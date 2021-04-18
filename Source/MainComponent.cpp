@@ -32,15 +32,17 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "MainComponent.h"
-#include "ScoreWindow.h"
+#include "TilePiece.h"
 #include "Board.h"
 #include "Queue.h"
 #include "Randomizer.h"
+#include "ScoreWindow.h"
 
 static constexpr int TILESIZE = 70;
 static constexpr int HALFTILE = TILESIZE / 2;
 static constexpr int BOARD_VSTARTPOS = 80;
 static constexpr int BOARD_HSTARTPOS = 175;
+
 
 // ---- Helper types and constants ----
 
@@ -58,7 +60,14 @@ MainComponent::MainComponent()
 		m_scoreWindow(nullptr),
 		m_numBombs(MAX_NUM_BOMBS)
 {
-    setSize (900, 600);
+	// Create GUI component wich will work as a clickable hyperlink to our github.
+	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDream"),
+															juce::URL("https://github.com/escalonely/PipeDream"));
+	m_hyperlink->setFont(juce::Font("consolas", 18.0f, juce::Font::plain), false /* do not resize */);
+	m_hyperlink->setColour(juce::HyperlinkButton::textColourId, juce::Colours::grey);
+	addAndMakeVisible(m_hyperlink.get());
+
+	setSize(900, 620);
 
 	// Create board
 	m_board = new Board(10, 7);
@@ -88,9 +97,8 @@ MainComponent::~MainComponent()
 
 void MainComponent::resized()
 {
-    // This is called when the MainComponent is resized.
-    // If you add any child components, this is where you should
-    // update their positions.
+	// Position the hyperlink
+	m_hyperlink->setBounds(getLocalBounds().getWidth() - 380, getLocalBounds().getHeight() - 50, 350, 40);
 }
 
 void MainComponent::timerCallback()
@@ -373,6 +381,23 @@ void MainComponent::paint(juce::Graphics& g)
 		//g.drawRect(textRect, 1.0f);
 	}
 
+	// Draw app info
+	{
+		juce::String infoText("Pipe Dream Clone V");
+		juce::String versionString(JUCE_STRINGIFY(JUCE_APP_VERSION));
+		infoText << versionString;
+
+		juce::Rectangle<int> textRect(BOARD_HSTARTPOS, getLocalBounds().getHeight() - 50, 250, 40);
+
+		g.setFont(juce::Font("consolas", 18.0f, juce::Font::plain));
+		g.setColour(juce::Colours::grey);
+		g.drawText(infoText, textRect, juce::Justification::left, false);
+		//g.drawRect(textRect, 1);
+
+		//textRect = juce::Rectangle<int>(getLocalBounds().getWidth() - 380, getLocalBounds().getHeight() - 50, 350, 40);
+		//g.drawRect(textRect, 1);
+	}
+
 	// Draw bombs
 	DrawBombs(juce::Point<int>(538, 20), g);
 
@@ -384,6 +409,8 @@ void MainComponent::paint(juce::Graphics& g)
 		// Pipe shape
 		juce::Point<int> p(queueHStartPos, queueVStartPos - i * (TILESIZE - 0));
 		DrawTile((m_queue->GetTile(i)), p, g);
+		DrawCrossSecondWay((m_queue->GetTile(i)), p, g);
+		DrawTileDecoration((m_queue->GetTile(i)), p, g);
 
 		if (i == 0)
 		{
@@ -402,6 +429,8 @@ void MainComponent::paint(juce::Graphics& g)
 
 			DrawTile(m_board->GetTile(i, j), p, g);
 			DrawOoze(m_board->GetTile(i, j), p, g);
+			DrawCrossSecondWay(m_board->GetTile(i, j), p, g);
+			DrawTileDecoration(m_board->GetTile(i, j), p, g);
 		}
 	}
 }
@@ -560,15 +589,26 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 
 			case TilePiece::TYPE_CROSS:
 				{
-					line = juce::Line<int>(	origin.getX(), 
-											origin.getY() + HALFTILE, 
-											origin.getX() + TILESIZE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), pipeThickness);
-					line = juce::Line<int>(	origin.getX() + HALFTILE, 
-											origin.getY(), 
-											origin.getX() + HALFTILE, 
-											origin.getY() + TILESIZE);
+					Cross* crossTile = dynamic_cast<Cross*>(pipe);
+					if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
+					{
+						// Draw horizontal pipe first. 
+						// Vertical pipe will be drawn in DrawCrossSecondWay()
+						line = juce::Line<int>(	origin.getX(), 
+												origin.getY() + HALFTILE, 
+												origin.getX() + TILESIZE, 
+												origin.getY() + HALFTILE);
+					}
+					else
+					{
+						// Draw vertica pipe first. 
+						// Horizontal pipe will be drawn in DrawCrossSecondWay()
+						line = juce::Line<int>(	origin.getX() + HALFTILE,
+												origin.getY(), 
+												origin.getX() + HALFTILE, 
+												origin.getY() + TILESIZE);
+					}
+
 					g.drawLine(line.toFloat(), pipeThickness);
 				}
 				break;
@@ -576,34 +616,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			default:
 				break;
 			}
-
-			// Frame
-			g.setColour(juce::Colours::white);
-			g.drawRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE, 1);
-
-			// If this tile has an explosion on it, draw it.
-			int exp = pipe->PopExplosion();
-			if (exp > 0)
-			{
-				juce::Path starPath;
-				starPath.addStar(juce::Point<float>(static_cast<float>(	origin.getX() + HALFTILE),
-																		static_cast<float>(origin.getY() + HALFTILE)),
-																		7,								// Number of peaks
-																		static_cast<float>(exp * 4),	// Inner radius
-																		static_cast<float>(exp * 8),	// Outer radius
-																		static_cast<float>(exp * 2));	// Rotation angle
-				g.setColour(juce::Colours::orangered);
-				g.fillPath(starPath);
-			}
 		}
-	}
-
-	// Empty tile
-	else
-	{
-		// Frame
-		g.setColour(juce::Colours::white);
-		g.drawRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE, 1);
 	}
 }
 
@@ -945,54 +958,209 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			case TilePiece::TYPE_CROSS:
 				{
 					Cross* crossTile = dynamic_cast<Cross*>(pipe);
-
-					fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
-					if (fill > 0)
+					if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 					{
-						if (pipe->GetFlowDirection() == Pipe::DIR_N)
+						// Draw horizontally flowing ooze first.
+						fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
+						if (fill > 0)
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE,
-													origin.getY() + TILESIZE - fill,
-													origin.getX() + HALFTILE,
-													origin.getY() + TILESIZE);
-						}
-						else
-						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE,
-													origin.getY(),
-													origin.getX() + HALFTILE,
-													origin.getY() + fill);
-						}
+							if (pipe->GetFlowDirection() == Pipe::DIR_E)
+							{
+								line = juce::Line<int>(	origin.getX(),
+														origin.getY() + HALFTILE,
+														origin.getX() + fill,
+														origin.getY() + HALFTILE);
+							}
+							else
+							{
+								line = juce::Line<int>(	origin.getX() + TILESIZE - fill,
+														origin.getY() + HALFTILE,
+														origin.getX() + TILESIZE,
+														origin.getY() + HALFTILE);
+							}
 
-						g.drawLine(line.toFloat(), oozeThickness);
+							g.drawLine(line.toFloat(), oozeThickness);
+						}
 					}
 
-					fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
-					if (fill > 0)
+					else
 					{
-						if (pipe->GetFlowDirection() == Pipe::DIR_E)
+						// Draw vertically flowing ooze first.
+						fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
+						if (fill > 0)
 						{
-							line = juce::Line<int>(	origin.getX(),
-													origin.getY() + HALFTILE,
-													origin.getX() + fill,
-													origin.getY() + HALFTILE);
-						}
-						else
-						{
-							line = juce::Line<int>(	origin.getX() + TILESIZE - fill,
-													origin.getY() + HALFTILE,
-													origin.getX() + TILESIZE,
-													origin.getY() + HALFTILE);
-						}
+							if (pipe->GetFlowDirection() == Pipe::DIR_N)
+							{
+								line = juce::Line<int>(	origin.getX() + HALFTILE,
+														origin.getY() + TILESIZE - fill,
+														origin.getX() + HALFTILE,
+														origin.getY() + TILESIZE);
+							}
+							else
+							{
+								line = juce::Line<int>(	origin.getX() + HALFTILE,
+														origin.getY(),
+														origin.getX() + HALFTILE,
+														origin.getY() + fill);
+							}
 
-						g.drawLine(line.toFloat(), oozeThickness);
+							g.drawLine(line.toFloat(), oozeThickness);
+						}
 					}
-
 				}
 				break;
 
 			default:
 				break;
+			}
+		}
+	}
+}
+
+void MainComponent::DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g)
+{
+	if (tile->GetType() == TilePiece::TYPE_CROSS)
+	{
+		Cross* crossTile = dynamic_cast<Cross*>(tile);
+
+		// TODO make class const
+		static constexpr float pipeThickness = 20.0f;
+
+		juce::Line<int> line;
+		g.setColour(juce::Colours::black);
+
+		// Draw pipe first
+		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
+		{
+			// Vertical pipe.
+			line = juce::Line<int>(	origin.getX() + HALFTILE, 
+									origin.getY(), 
+									origin.getX() + HALFTILE, 
+									origin.getY() + TILESIZE);
+		}
+		else
+		{
+			// Horizontal pipe. 
+			line = juce::Line<int>(	origin.getX(), 
+									origin.getY() + HALFTILE, 
+									origin.getX() + TILESIZE, 
+									origin.getY() + HALFTILE);
+		}
+		g.drawLine(line.toFloat(), pipeThickness);
+
+		// Little lines along the pipe, which make the separation between horizontal and vertical 
+		// components of the cross-pipe more visually obvious.
+		g.setColour(GetCurrentTileColor());
+		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
+		{
+			// Vertical little lines
+			line = juce::Line<int>(	origin.getX() + HALFTILE - static_cast<int>(pipeThickness / 2) - 1,
+									origin.getY() + 1,
+									origin.getX() + HALFTILE - static_cast<int>(pipeThickness / 2) - 1,
+									origin.getY() + TILESIZE - 1);
+			g.drawLine(line.toFloat(), 2.0f);
+			line = juce::Line<int>(	origin.getX() + HALFTILE + static_cast<int>(pipeThickness / 2) + 1,
+									origin.getY() + 1,
+									origin.getX() + HALFTILE + static_cast<int>(pipeThickness / 2) + 1,
+									origin.getY() + TILESIZE - 1);
+			g.drawLine(line.toFloat(), 2.0f);
+		}
+		else
+		{
+			// Horizontal little lines
+			line = juce::Line<int>(	origin.getX() + 1,
+									origin.getY() + HALFTILE - static_cast<int>(pipeThickness / 2) - 1,
+									origin.getX() + TILESIZE - 1,
+									origin.getY() + HALFTILE - static_cast<int>(pipeThickness / 2) - 1);
+			g.drawLine(line.toFloat(), 2.0f);
+			line = juce::Line<int>(	origin.getX() + 1,
+									origin.getY() + HALFTILE + static_cast<int>(pipeThickness / 2) + 1,
+									origin.getX() + TILESIZE - 1,
+									origin.getY() + HALFTILE + static_cast<int>(pipeThickness / 2) + 1);
+			g.drawLine(line.toFloat(), 2.0f);
+		}
+
+		// Draw ooze
+		g.setColour(juce::Colours::limegreen);
+		int fill;
+		static constexpr float oozeThickness = 15.0f;
+
+		// Vertically flowing ooze
+		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
+		{
+			fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
+			if (fill > 0)
+			{
+				if (crossTile->GetFlowDirection() == Pipe::DIR_N)
+				{
+					line = juce::Line<int>(	origin.getX() + HALFTILE,
+											origin.getY() + TILESIZE - fill,
+											origin.getX() + HALFTILE,
+											origin.getY() + TILESIZE);
+				}
+				else
+				{
+					line = juce::Line<int>(	origin.getX() + HALFTILE,
+											origin.getY(),
+											origin.getX() + HALFTILE,
+											origin.getY() + fill);
+				}
+
+				g.drawLine(line.toFloat(), oozeThickness);
+			}
+		}
+
+		// Hoizontally flowing ooze
+		else
+		{
+			fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
+			if (fill > 0)
+			{
+				if (crossTile->GetFlowDirection() == Pipe::DIR_E)
+				{
+					line = juce::Line<int>(	origin.getX(),
+											origin.getY() + HALFTILE,
+											origin.getX() + fill,
+											origin.getY() + HALFTILE);
+				}
+				else
+				{
+					line = juce::Line<int>(	origin.getX() + TILESIZE - fill,
+											origin.getY() + HALFTILE,
+											origin.getX() + TILESIZE,
+											origin.getY() + HALFTILE);
+				}
+
+				g.drawLine(line.toFloat(), oozeThickness);
+			}
+		}
+	}
+}
+
+void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g)
+{
+	// Frame around tile
+	g.setColour(juce::Colours::white);
+	g.drawRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE, 1);
+
+	if (tile->GetType() != TilePiece::TYPE_NONE)
+	{
+		Pipe* pipe = dynamic_cast<Pipe*>(tile);
+		if (pipe != nullptr)
+		{
+			// If this tile has an explosion on it, draw it.
+			int exp = pipe->PopExplosion();
+			if (exp > 0)
+			{
+				juce::Path starPath;
+				starPath.addStar(juce::Point<float>(static_cast<float>(	origin.getX() + HALFTILE),
+																		static_cast<float>(origin.getY() + HALFTILE)),
+																		7,								// Number of peaks
+																		static_cast<float>(exp * 4),	// Inner radius
+																		static_cast<float>(exp * 8),	// Outer radius
+																		static_cast<float>(exp * 2));	// Rotation angle
+				g.setColour(juce::Colours::orangered);
+				g.fillPath(starPath);
 			}
 		}
 	}

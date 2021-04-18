@@ -62,9 +62,56 @@ public:
 	juce::Colour GetCurrentTileColor() const;
 	float GetCurrentOozePerPump() const;
 	int GetCurrentCountdown() const;
-	void DrawTile(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
-	void DrawOoze(TilePiece* tile, juce::Point<int> p, juce::Graphics& g);
-	void DrawBombs(juce::Point<int> p, juce::Graphics& g);
+
+	/**
+	 * Draw a tile piece itself, of any kind.
+	 *
+	 * @param tile		The tile piece to draw.
+	 * @param origin	The point on the MainComponent window where the top-left corner 
+	 *					of the tile being drawn will be located.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw the ooze flowing through a pipe tile.
+	 *
+	 * @param tile		The tile piece to draw the ooze over.
+	 * @param origin	The point on the MainComponent window where the top-left corner
+	 *					of the tile being drawn will be located.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * The DrawTile() and DrawOoze() methods only worry about the first of the "ways" of TYPE_CROSS pipes, 
+	 * either the vertical or the horizontal way. This method should be used afterwards to draw the 
+	 * second, foreground way of TYPE_CROSS pipes. This method will not affect tiles of any other type.
+	 *
+	 * @param tile		The TYPE_CROSS tile piece to draw.
+	 * @param origin	The point on the MainComponent window where the top-left corner
+	 *					of the tile being drawn will be located.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw a tile piece's decoration elements, such as frame and explosion graphics.
+	 *
+	 * @param tile		The tile piece to draw the decorations for.
+	 * @param origin	The point on the MainComponent window where the top-left corner
+	 *					of the tile being drawn will be located.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw the bombs next to the board, used to replace pipe tiles.
+	 *
+	 * @param origin	The point on the MainComponent window where the first bomb shall be drawn.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawBombs(juce::Point<int> origin, juce::Graphics& g);
 
 private:
 	Board* m_board;
@@ -105,6 +152,13 @@ private:
 	 * the actual player score, this is multiplied by the score multiplier.
 	 */
 	static const int SCORE_MULTIPLIER;
+
+
+	/**
+	 * Hyperlink to the download URL.
+	 */
+	std::unique_ptr<juce::HyperlinkButton> m_hyperlink;
+	
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
