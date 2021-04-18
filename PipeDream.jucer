@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="Lwsp3c" name="PipeDream" projectType="guiapp" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1"
+              version="0.0.1" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDream"
+              companyCopyright="Copyright (C) 2021 Bernardo Escalona.">
   <MAINGROUP id="O96DaU" name="PipeDream">
     <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
       <FILE id="KVUytk" name="Randomizer.cpp" compile="1" resource="0" file="Source/Randomizer.cpp"/>
