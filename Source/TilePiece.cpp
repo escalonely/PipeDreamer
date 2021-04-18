@@ -32,6 +32,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "TilePiece.h"
+#include "Randomizer.h"
 #include <assert.h>
 
 
@@ -392,7 +393,10 @@ Cross::Cross()
 	m_horizWayFree(true),
 	m_vertWayFree(true)
 {
-
+	// Randomly determine whether the horizontal component of the cross should go on the
+	// foreground, of the vertical one. This is just for cosmetic flavor.
+	Randomizer* rand = Randomizer::GetInstance();
+	m_backgroundWay = static_cast<Way>(rand->GetWithinRange(WAY_VERTICAL, WAY_HORIZONTAL));
 }
 
 float Cross::Pump(float amount)
@@ -496,4 +500,9 @@ int Cross::GetScoreBase() const
 		return 1;
 
 	return 0;
+}
+
+Cross::Way Cross::GetBackgroundWay() const
+{
+	return m_backgroundWay;
 }

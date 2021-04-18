@@ -173,6 +173,7 @@ public:
 
 	int GetScoreBase() const override;
 
+	Way GetBackgroundWay() const;
 
 protected:
 	/**
@@ -187,4 +188,10 @@ protected:
 
 	bool m_horizWayFree;
 	bool m_vertWayFree;
+
+	/**
+	 * Which way, horizontal or vertical, is drawn first and thus ends up 
+	 * on the background. The second way, will then appear on the foreground. 
+	 */
+	Way m_backgroundWay;
 };
