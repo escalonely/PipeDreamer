@@ -17,9 +17,10 @@
       <FILE id="IDzCBV" name="TilePiece.cpp" compile="1" resource="0" file="Source/TilePiece.cpp"/>
       <FILE id="TILJZm" name="TilePiece.h" compile="0" resource="0" file="Source/TilePiece.h"/>
       <FILE id="trEwuK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
-      <FILE id="zpZr05" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
+      <FILE id="OU2AVU" name="Main.h" compile="0" resource="0" file="Source/Main.h"/>
       <FILE id="cZECLC" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
+      <FILE id="zpZr05" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1"/>
