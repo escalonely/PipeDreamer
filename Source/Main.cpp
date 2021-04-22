@@ -31,92 +31,61 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <JuceHeader.h>
+#include "Main.h"
 #include "MainComponent.h"
 
-
-/**
- * Main application.
- */
-class PipeDreamApplication	: public juce::JUCEApplication
+void PipeDreamApplication::InitApplicationProperties()
 {
-public:
-	PipeDreamApplication() {}
+	// TODO
+	juce::ApplicationProperties props;
 
-	const juce::String getApplicationName() override	   { return ProjectInfo::projectName; }
-	const juce::String getApplicationVersion() override	   { return ProjectInfo::versionString; }
-	bool moreThanOneInstanceAllowed() override			   { return true; }
+	juce::PropertiesFile::Options options;
+	options.applicationName = ProjectInfo::projectName;
+	options.filenameSuffix = ".settings";
+	options.osxLibrarySubFolder = "Application Support";
+	options.folderName = juce::File::getSpecialLocation(juce::File::SpecialLocationType::userApplicationDataDirectory).getChildFile(ProjectInfo::projectName).getFullPathName();
+	options.storageFormat = juce::PropertiesFile::storeAsXML;
+	props.setStorageParameters(options);
 
-	void initialise (const juce::String& commandLine) override
+	//props.getUserSettings()->setValue("Flynn", 12345);
+	//props.getUserSettings()->setValue("Bob", 2);
+	//props.getUserSettings()->setValue("Madmax", 32132);
+
+	juce::StringPairArray allData = props.getUserSettings()->getAllProperties();
+	juce::StringArray allkeys = allData.getAllKeys();
+
+	std::vector<std::pair<juce::String, int>> scorePairVector;
+	for (int i = 0; i < allData.size(); i++)
 	{
-		(void)commandLine;
+		juce::String name(allkeys[i]);
+		int score = props.getUserSettings()->getIntValue(allkeys[i]);
 
-		// TODO: think about useful commandline options
-		// i.e.: starting level.
-
-		m_mainWindow.reset (new MainWindow (getApplicationName()));
+		scorePairVector.push_back(std::pair<juce::String, int>(name, score));
 	}
 
-	void shutdown() override
+	// https://stackoverflow.com/questions/19842035/how-can-i-sort-a-stdmap-first-by-value-then-by-key
+	auto cmp = [](std::pair<juce::String, int> const & a, std::pair<juce::String, int> const & b)
 	{
-		// This deletes the window unique_ptr.
-		m_mainWindow = nullptr;
-	}
+		return a.second > b.second;
+	};
+	std::sort(scorePairVector.begin(), scorePairVector.end(), cmp);
+}
 
-	void systemRequestedQuit() override
-	{
-		// This is called when the app is being asked to quit: you can ignore this
-		// request and let the app carry on running, or call quit() to allow the app to close.
-		quit();
-	}
-
-	void anotherInstanceStarted (const juce::String& commandLine) override
-	{
-		(void)commandLine;
-	}
-
-	/*
-		This class implements the desktop window that contains an instance of
-		our MainComponent class.
-	*/
-	class MainWindow	: public juce::DocumentWindow
-	{
-	public:
-		MainWindow (juce::String name)
-			: DocumentWindow(	name,
-								juce::Desktop::getInstance().getDefaultLookAndFeel()
-									.findColour (juce::ResizableWindow::backgroundColourId),
-								DocumentWindow::allButtons)
-		{
-			setUsingNativeTitleBar(true);
-			setContentOwned(new MainComponent(), true);
+PipeDreamApplication::MainWindow::MainWindow(juce::String name)
+	: DocumentWindow(name,
+		juce::Desktop::getInstance().getDefaultLookAndFeel()
+		.findColour(juce::ResizableWindow::backgroundColourId),
+		DocumentWindow::allButtons)
+{
+	setUsingNativeTitleBar(true);
+	setContentOwned(new MainComponent(), true);
 
 #if JUCE_IOS || JUCE_ANDROID
-			setFullScreen (true);
+	setFullScreen(true);
 #else
-			setResizable (false, false);
-			centreWithSize (getWidth(), getHeight());
+	setResizable(false, false);
+	centreWithSize(getWidth(), getHeight());
 #endif
 
-			setVisible (true);
-		}
-
-		void closeButtonPressed() override
-		{
-			// This is called when the user tries to close this window. Here, we'll just
-			// ask the app to quit when this happens.
-			JUCEApplication::getInstance()->systemRequestedQuit();
-		}
-
-	private:
-		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainWindow)
-	};
-
-private:
-	std::unique_ptr<MainWindow> m_mainWindow;
-};
-
-/**
- * This macro generates the main() routine that launches the app.
- */
-START_JUCE_APPLICATION (PipeDreamApplication)
+	setVisible(true);
+}
