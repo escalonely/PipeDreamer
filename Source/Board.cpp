@@ -34,25 +34,19 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Board.h"
 #include "Randomizer.h"
 
+// ---- Helper types and constants ----
 
+const int Board::MAX_NUM_BOMBS(5);
+const int Board::SCORE_BASE_FOR_FREE_BOMB(5);
+
+
+// ---- Class Implementation ----
 
 Board::Board(int numCols, int numRows)
 	:	m_numCols(numCols), 
-		m_numRows(numRows),
-		m_scoreBase(0)
+		m_numRows(numRows)
 {
-	// Fill the board with (empty) tiles.
-	for (int i = 0; i < numCols; i++)
-	{
-		for (int j = 0; j < numRows; j++)
-		{
-			TilePiece* tile = TilePiece::CreateTile();
-
-			m_tileMap[Coord(i, j)] = tile;
-		}
-	}
-
-	CreateRandomStart();
+	Reset();
 }
 
 Board::~Board()
@@ -65,6 +59,28 @@ Board::~Board()
 			delete m_tileMap[Coord(i, j)];
 		}
 	}
+}
+
+void Board::Reset()
+{
+	m_scoreBase = 0;
+	m_scoreUntilFreeBomb = 0;
+	m_numBombs = MAX_NUM_BOMBS;
+
+	// Fill the board with (empty) tiles.
+	for (int i = 0; i < GetNumCols(); i++)
+	{
+		for (int j = 0; j < GetNumRows(); j++)
+		{
+			if (m_tileMap.count(Coord(i, j)) > 0)
+				delete m_tileMap[Coord(i, j)];
+
+			m_tileMap[Coord(i, j)] = TilePiece::CreateTile();
+		}
+	}
+
+	// Set random starting tile
+	CreateRandomStart();
 }
 
 TilePiece::Type Board::GetTileType(int col, int row) const
@@ -118,6 +134,18 @@ bool Board::Pump(float amount)
 		{
 			m_scoreBase += oozingPipe->GetScoreBase();
 
+			// Once this score reaches SCORE_BASE_FOR_FREE_BOMB, the number of available 
+			// bombs will increase by one. After that, the score until the next restored
+			// bomb will be 0 again.
+			m_scoreUntilFreeBomb += oozingPipe->GetScoreBase();
+			if (m_scoreUntilFreeBomb >= SCORE_BASE_FOR_FREE_BOMB)
+			{
+				if (m_numBombs < MAX_NUM_BOMBS)
+					m_numBombs++;
+
+				m_scoreUntilFreeBomb = 0;
+			}
+
 			Pipe::Direction outFlowDir = oozingPipe->GetFlowDirection();
 			Pipe::Direction inFlowDir = Pipe::GetOppositeDirection(outFlowDir);
 
@@ -147,24 +175,6 @@ bool Board::Pump(float amount)
 	}
 
 	return ret;
-}
-
-void Board::Reset()
-{
-	m_scoreBase = 0;
-
-	// Clear all tiles
-	for (int i = 0; i < GetNumCols(); i++)
-	{
-		for (int j = 0; j < GetNumRows(); j++)
-		{
-			delete m_tileMap[Coord(i, j)];
-			m_tileMap[Coord(i, j)] = new TilePiece();
-		}
-	}
-
-	// Set random starting tile
-	CreateRandomStart();
 }
 
 TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
@@ -220,7 +230,7 @@ void Board::CreateRandomStart()
 {
 	// Determine a random position on the board.
 	Randomizer* rand = Randomizer::GetInstance();
-	int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows));
+	int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows) - 1);
 	Coord startCoord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
 
 	TilePiece::Type starterType(TilePiece::TYPE_NONE);
@@ -240,4 +250,25 @@ void Board::CreateRandomStart()
 	// Set starter tile.
 	ReplaceTile(startCoord.first, startCoord.second, starterType);
 	m_oozingTile = m_tileMap[startCoord];
+}
+
+int Board::GetNumBombs() const
+{
+	return m_numBombs;
+}
+
+bool Board::PopBomb()
+{
+	if (m_numBombs > 0)
+	{
+		m_numBombs--;
+		return true;
+	}
+
+	return false;
+}
+
+int Board::GetPercentUntilFreeBomb()
+{
+	return static_cast<int>((m_scoreUntilFreeBomb * 100) / SCORE_BASE_FOR_FREE_BOMB);
 }

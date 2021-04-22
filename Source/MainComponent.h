@@ -124,8 +124,6 @@ private:
 
 	int m_countDown;
 
-	int m_numBombs;
-
 	/**
 	 * Level starts at 1, and as it increases, the amount of ooze pumped per frame also increases.
 	 */
@@ -143,22 +141,15 @@ private:
 	static const int MIN_SCORE_TO_ADVANCE;
 
 	/**
-	 * Max number of bombs available per round, used to replace existing pipe tiles.
-	 */
-	static const int MAX_NUM_BOMBS;
-
-	/**
-	 * The Board and the TilePieces only know about their base score value. To obtain 
+	 * The Board and the TilePieces only know about their base score value. To obtain
 	 * the actual player score, this is multiplied by the score multiplier.
 	 */
 	static const int SCORE_MULTIPLIER;
-
 
 	/**
 	 * Hyperlink to the download URL.
 	 */
 	std::unique_ptr<juce::HyperlinkButton> m_hyperlink;
-	
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

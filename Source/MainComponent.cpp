@@ -37,6 +37,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Queue.h"
 #include "Randomizer.h"
 #include "ScoreWindow.h"
+//#include "Main.cpp"
 
 static constexpr int TILESIZE = 70;
 static constexpr int HALFTILE = TILESIZE / 2;
@@ -46,7 +47,6 @@ static constexpr int BOARD_HSTARTPOS = 175;
 
 // ---- Helper types and constants ----
 
-const int MainComponent::MAX_NUM_BOMBS(5);
 const int MainComponent::MIN_SCORE_TO_ADVANCE(2000);
 const int MainComponent::SCORE_MULTIPLIER(100);
 
@@ -57,8 +57,7 @@ MainComponent::MainComponent()
 	:	m_blockInteraction(0),
 		m_difficultyLevel(1),
 		m_cumulativeScore(0),
-		m_scoreWindow(nullptr),
-		m_numBombs(MAX_NUM_BOMBS)
+		m_scoreWindow(nullptr)
 {
 	// Create GUI component wich will work as a clickable hyperlink to our github.
 	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDream"),
@@ -66,6 +65,13 @@ MainComponent::MainComponent()
 	m_hyperlink->setFont(juce::Font("consolas", 18.0f, juce::Font::plain), false /* do not resize */);
 	m_hyperlink->setColour(juce::HyperlinkButton::textColourId, juce::Colours::grey);
 	addAndMakeVisible(m_hyperlink.get());
+
+	// TODO
+	//PipeDreamApplication* app = dynamic_cast<PipeDreamApplication*>(juce::JUCEApplication::getInstance());
+	//if (app != nullptr)
+	//{
+	//	app->InitApplicationProperties();
+	//}
 
 	setSize(900, 620);
 
@@ -179,12 +185,9 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 						if ((clickedPipe != nullptr) &&
 							(clickedPipe->IsEmpty()) &&		// Only empty tiles can be replaced.
 							(!clickedPipe->IsStart()) &&	// Cannot replace starter tiles.
-							(m_numBombs > 0))				// Need bombs to replace existing pipe tiles.
+							(m_board->PopBomb()))			// Need bombs to replace existing pipe tiles.
 						{
 							replace = true;
-
-							// One bomb was used up.
-							m_numBombs--;
 
 							// Using bombs disables actions for a few more frames.
 							m_blockInteraction += framesInteractionBlocked;
@@ -212,6 +215,8 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 {
 	(void)source;
 
+	//const juce::ScopedLock lock(m_lock); // TODO?
+
 	if (m_scoreWindow != nullptr)
 	{
 		switch (m_scoreWindow->GetCommand())
@@ -222,7 +227,6 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 				m_board->Reset();
 				m_queue->Reset();
 				m_blockInteraction = 0;
-				m_numBombs = MAX_NUM_BOMBS;
 
 				// If re restart at lvl 1, clear total score
 				if (m_scoreWindow->GetCommand() == ScoreWindow::CMD_RESTART)
@@ -1168,11 +1172,19 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 
 void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
 {
-	for (int i = 0; i < MAX_NUM_BOMBS; i++)
+	for (int i = 0; i < Board::MAX_NUM_BOMBS; i++)
 	{
-		if (i < m_numBombs)
+		// Draw the bombs that are still available
+		if (i < m_board->GetNumBombs())
 		{
 			g.setColour(juce::Colours::red);
+			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat());
+		}
+
+		// Draw the one used up bomb, which will soon become available again.
+		else if (i == m_board->GetNumBombs())
+		{
+			g.setColour(juce::Colour(static_cast<juce::uint8>(67 + m_board->GetPercentUntilFreeBomb()), 67, 67));
 			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat());
 		}
 
