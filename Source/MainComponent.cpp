@@ -267,9 +267,9 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 		juce::Colours::darkkhaki,		// Level 3
 		juce::Colour(140, 180, 90),		// Level 4
 		juce::Colours::darkslategrey,	// Level 5
-		juce::Colours::rosybrown,		// Level 6
+		juce::Colours::hotpink,			// Level 6
 		juce::Colour(27, 122, 165),		// Level 7
-		juce::Colours::lightslategrey,	// Level 8
+		juce::Colours::coral,			// Level 8
 		juce::Colours::blueviolet,		// Level 9
 		juce::Colours::darkorange,		// Level 10
 		juce::Colours::mediumseagreen,	// Level 11
@@ -288,8 +288,8 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 float MainComponent::GetCurrentOozePerPump() const
 {
 	static const float oozePerLevel[] = { 
-		1.2F, // Level 1
-		1.3F, // Level 2
+		1.0F, // Level 1
+		1.2F, // Level 2
 		1.4F, // Level 3
 		1.5F, // Level 4
 		1.6F, // Level 5
@@ -314,8 +314,8 @@ float MainComponent::GetCurrentOozePerPump() const
 int MainComponent::GetCurrentCountdown() const
 {
 	static const int countdownPerLevel[] = {
-		280,	// Level 1
-		260,	// Level 2
+		320,	// Level 1
+		280,	// Level 2
 		240,	// Level 3
 		220,	// Level 4
 		200,	// Level 5
@@ -344,44 +344,15 @@ void MainComponent::paint(juce::Graphics& g)
 	// Background colour
 	g.fillAll(juce::Colour(67, 67, 67));
 
-	// Draw countdown
-	DrawOozeMeter(juce::Point<int>(50 + HALFTILE / 2, 30), g);
+	// Draw countdown to ooze.
+	DrawOozeMeter(juce::Point<int>(74, 30), g);
 
 	// Draw current level number and score
-	{
-		int playerScore = m_board->GetScoreBase() * SCORE_MULTIPLIER;
-
-		g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
-		g.setColour(juce::Colours::grey);
-
-		juce::Rectangle<int> textRect(BOARD_HSTARTPOS, 20, 92, HALFTILE);
-		g.drawText("Level:", textRect, juce::Justification::left, false);
-		//g.drawRect(textRect, 1.0f);
-
-		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52, 20, 92, HALFTILE);
-		g.drawText("Score:", textRect, juce::Justification::left, false);
-		//g.drawRect(textRect, 1.0f);
-
-		// If score this round is high enough to advance to next difficulty level, highlight the number.
-		if (playerScore >= MIN_SCORE_TO_ADVANCE)
-		{
-			g.setColour(juce::Colours::yellow);
-			g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
-		}
-		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52 + 92, 20, 160, HALFTILE);
-		g.drawText(juce::String(playerScore), textRect, juce::Justification::left, false);
-		//g.drawRect(textRect, 1.0f);
-
-		// Show difficulty level number in this level's tile color.
-		g.setColour(GetCurrentTileColor());
-		textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92, 20, 52, HALFTILE);
-		g.drawText(juce::String(m_difficultyLevel), textRect, juce::Justification::left, false);
-		//g.drawRect(textRect, 1.0f);
-	}
+	DrawLevelAndScore(g);
 
 	// Draw app info
 	{
-		juce::String infoText("Pipe Dream Clone V");
+		juce::String infoText("Pipe Dreamer V");
 		juce::String versionString(JUCE_STRINGIFY(JUCE_APP_VERSION));
 		infoText << versionString;
 
@@ -431,6 +402,38 @@ void MainComponent::paint(juce::Graphics& g)
 			DrawTileDecoration(m_board->GetTile(i, j), p, g);
 		}
 	}
+}
+
+void MainComponent::DrawLevelAndScore(juce::Graphics& g)
+{
+	int playerScore = m_board->GetScoreBase() * SCORE_MULTIPLIER;
+
+	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
+	g.setColour(juce::Colours::grey);
+
+	juce::Rectangle<int> textRect(BOARD_HSTARTPOS, 20, 92, HALFTILE);
+	g.drawText("Level:", textRect, juce::Justification::left, false);
+	//g.drawRect(textRect, 1.0f);
+
+	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52, 20, 92, HALFTILE);
+	g.drawText("Score:", textRect, juce::Justification::left, false);
+	//g.drawRect(textRect, 1.0f);
+
+	// If score this round is high enough to advance to next difficulty level, highlight the number.
+	if (playerScore >= MIN_SCORE_TO_ADVANCE)
+	{
+		g.setColour(juce::Colours::yellow);
+		g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
+	}
+	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52 + 92, 20, 160, HALFTILE);
+	g.drawText(juce::String(playerScore), textRect, juce::Justification::left, false);
+	//g.drawRect(textRect, 1.0f);
+
+	// Show difficulty level number in this level's tile color.
+	g.setColour(GetCurrentTileColor());
+	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92, 20, 52, HALFTILE);
+	g.drawText(juce::String(m_difficultyLevel), textRect, juce::Justification::left, false);
+	//g.drawRect(textRect, 1.0f);
 }
 
 void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g)
@@ -1166,42 +1169,44 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 
 void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 {
-	//if (m_countDown > 0)
-	//{
-	//	int seconds = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
-	//	g.setFont(juce::Font("consolas", 200.0f, juce::Font::plain));
-	//	g.setColour(juce::Colours::yellow);
-	//	g.drawText(juce::String(seconds), juce::Rectangle<int>(30, 30, 100, 100), juce::Justification::centred, true);
-	//}
-
-	int oozeLevel;
-	if (m_countDown > 0)
-	{
-		// Starts at TILESIZE, goes to 0.
-		oozeLevel = static_cast<int>((m_countDown * TILESIZE) / GetCurrentCountdown());
-	}
-	else if (m_board->GetScoreBase() * SCORE_MULTIPLIER < MIN_SCORE_TO_ADVANCE)
-	{
-		oozeLevel = static_cast<int>((m_board->GetScoreBase() * SCORE_MULTIPLIER * TILESIZE) / MIN_SCORE_TO_ADVANCE);
-	}
-	else
-	{
-		oozeLevel = 0;
-	}
-
-	juce::Rectangle<int> vialRect(origin.getX(), origin.getY(), 22, TILESIZE);
-	juce::Rectangle<int> oozeRect(origin.getX(), origin.getY() + oozeLevel, 22, TILESIZE - oozeLevel);
-
+	// Empty vial (background)
+	static constexpr int vialHeight = 118;
+	juce::Rectangle<int> vialRect(origin.getX(), origin.getY(), 22, vialHeight);
 	g.setColour(juce::Colours::black);
 	g.fillRect(vialRect);
 
+	// Ooze inside the vial.
 	g.setColour(juce::Colours::limegreen);
-	g.fillRect(oozeRect);
+	static constexpr int oozeMaxHeight = vialHeight - 6;
+	int oozeHeight;
+	if (m_countDown > 0)
+	{
+		// Starts at 0, goes to vialHeight		
+		oozeHeight = static_cast<int>(oozeMaxHeight - ((m_countDown * oozeMaxHeight) / GetCurrentCountdown()));
+	}
+	else if (m_board->GetScoreBase() * SCORE_MULTIPLIER < MIN_SCORE_TO_ADVANCE)
+	{
+		// Starts at vialHeight, goes to 0.
+		oozeHeight = static_cast<int>(((MIN_SCORE_TO_ADVANCE - (m_board->GetScoreBase() * SCORE_MULTIPLIER)) * oozeMaxHeight) / MIN_SCORE_TO_ADVANCE);
+	}
+	else
+	{
+		// Full yellow vial.
+		g.setColour(juce::Colours::yellow);
+		oozeHeight = oozeMaxHeight;
+	}
+	g.fillRect(juce::Rectangle<int>(origin.getX() + 3, origin.getY() + 3 + oozeMaxHeight - oozeHeight, 16, oozeHeight));
 
+	// Vial outline and markings.
+	g.setColour(juce::Colours::black);
+	//static constexpr float halfVial = 100;
+	g.drawLine(origin.getX() + 15.0f, 1.0f + origin.getY() + vialHeight * 0.25f,	origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.25f,	2.0f);
+	g.drawLine(origin.getX() + 10.0f, 1.0f + origin.getY() + vialHeight * 0.5f,		origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.5f,	2.0f);
+	g.drawLine(origin.getX() + 15.0f, 1.0f + origin.getY() + vialHeight * 0.75f,	origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.75f,	2.0f);
 	g.setColour(juce::Colours::white);
-	g.drawLine(origin.getX() + 15, origin.getY() + HALFTILE * 0.5f, origin.getX() + 22, origin.getY() + HALFTILE * 0.5f);
-	g.drawLine(origin.getX() + 10, origin.getY() + HALFTILE, origin.getX() + 22, origin.getY() + HALFTILE);
-	g.drawLine(origin.getX() + 15, origin.getY() + HALFTILE * 1.5f, origin.getX() + 22, origin.getY() + HALFTILE * 1.5f);
+	g.drawLine(origin.getX() + 15.0f, origin.getY() + vialHeight * 0.25f,	origin.getX() + 22.0f,	origin.getY() + vialHeight * 0.25f,	1.0f);
+	g.drawLine(origin.getX() + 10.0f, origin.getY() + vialHeight * 0.5f,	origin.getX() + 22.0f,	origin.getY() + vialHeight * 0.5f,	1.0f);
+	g.drawLine(origin.getX() + 15.0f, origin.getY() + vialHeight * 0.75f,	origin.getX() + 22.0f,	origin.getY() + vialHeight * 0.75f,	1.0f);
 	g.drawRect(vialRect);
 }
 

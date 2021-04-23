@@ -64,6 +64,13 @@ public:
 	int GetCurrentCountdown() const;
 
 	/**
+	 * Draw current level number and score.
+	 *
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawLevelAndScore(juce::Graphics& g);
+
+	/**
 	 * Draw a tile piece itself, of any kind.
 	 *
 	 * @param tile		The tile piece to draw.
@@ -106,7 +113,7 @@ public:
 	void DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
 
 	/**
-	 * Draw TODO
+	 * Draw the "ooze meter", i.e. the vial that indicates the countdown until ooze starts pumping out.
 	 *
 	 * @param origin	The point on the MainComponent window where the first bomb shall be drawn.
 	 * @param g			The graphics context used for drawing.
