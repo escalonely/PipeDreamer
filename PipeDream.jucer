@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="Lwsp3c" name="PipeDream" projectType="guiapp" useAppConfig="0"
+<JUCERPROJECT id="Lwsp3c" name="PipeDreamer" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1"
-              version="0.0.1" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDream"
+              version="0.0.1" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDreamer"
               companyCopyright="Copyright (C) 2021 Bernardo Escalona.">
-  <MAINGROUP id="O96DaU" name="PipeDream">
+  <MAINGROUP id="O96DaU" name="PipeDreamer">
     <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
       <FILE id="KVUytk" name="Randomizer.cpp" compile="1" resource="0" file="Source/Randomizer.cpp"/>
       <FILE id="id1vXB" name="Randomizer.h" compile="0" resource="0" file="Source/Randomizer.h"/>
@@ -27,8 +27,8 @@
   <EXPORTFORMATS>
     <VS2017 targetFolder="Builds/VisualStudio2017">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="PipeDream"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="PipeDream"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="PipeDreamer"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="PipeDreamer"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_core" path="..\..\..\Juce\JUCE_6.0.7\modules"/>

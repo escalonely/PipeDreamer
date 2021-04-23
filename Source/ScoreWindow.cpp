@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -72,7 +72,6 @@ void ScoreWindow::paint (juce::Graphics& g)
 	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
 	rect = juce::Rectangle<int>(5, 5, width - 10, buttonHeight * 3);
     g.drawFittedText(messageText, rect, juce::Justification::centred, true);
-	//g.drawRect(rect);
 
 	// Continue button
 	rect = juce::Rectangle<int>(10, (buttonHeight * 3) + 5, width - 20, buttonHeight - 10);

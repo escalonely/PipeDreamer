@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:

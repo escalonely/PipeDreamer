@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification, 
 are permitted provided that the following conditions are met:
@@ -60,14 +60,14 @@ MainComponent::MainComponent()
 		m_scoreWindow(nullptr)
 {
 	// Create GUI component wich will work as a clickable hyperlink to our github.
-	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDream"),
-															juce::URL("https://github.com/escalonely/PipeDream"));
+	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDreamer"),
+															juce::URL("https://github.com/escalonely/PipeDreamer"));
 	m_hyperlink->setFont(juce::Font("consolas", 18.0f, juce::Font::plain), false /* do not resize */);
 	m_hyperlink->setColour(juce::HyperlinkButton::textColourId, juce::Colours::grey);
 	addAndMakeVisible(m_hyperlink.get());
 
 	// TODO
-	//PipeDreamApplication* app = dynamic_cast<PipeDreamApplication*>(juce::JUCEApplication::getInstance());
+	//PipeDreamerApplication* app = dynamic_cast<PipeDreamerApplication*>(juce::JUCEApplication::getInstance());
 	//if (app != nullptr)
 	//{
 	//	app->InitApplicationProperties();
@@ -345,13 +345,7 @@ void MainComponent::paint(juce::Graphics& g)
 	g.fillAll(juce::Colour(67, 67, 67));
 
 	// Draw countdown
-	if (m_countDown > 0)
-	{
-		int seconds = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
-		g.setFont(juce::Font("consolas", 200.0f, juce::Font::plain));
-		g.setColour(juce::Colours::yellow);
-		g.drawText(juce::String(seconds), juce::Rectangle<int>(30, 30, 100, 100), juce::Justification::centred, true);
-	}
+	DrawOozeMeter(juce::Point<int>(50 + HALFTILE / 2, 30), g);
 
 	// Draw current level number and score
 	{
@@ -1168,6 +1162,47 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 			}
 		}
 	}
+}
+
+void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
+{
+	//if (m_countDown > 0)
+	//{
+	//	int seconds = static_cast<int>(m_countDown * 10 / GetCurrentCountdown());
+	//	g.setFont(juce::Font("consolas", 200.0f, juce::Font::plain));
+	//	g.setColour(juce::Colours::yellow);
+	//	g.drawText(juce::String(seconds), juce::Rectangle<int>(30, 30, 100, 100), juce::Justification::centred, true);
+	//}
+
+	int oozeLevel;
+	if (m_countDown > 0)
+	{
+		// Starts at TILESIZE, goes to 0.
+		oozeLevel = static_cast<int>((m_countDown * TILESIZE) / GetCurrentCountdown());
+	}
+	else if (m_board->GetScoreBase() * SCORE_MULTIPLIER < MIN_SCORE_TO_ADVANCE)
+	{
+		oozeLevel = static_cast<int>((m_board->GetScoreBase() * SCORE_MULTIPLIER * TILESIZE) / MIN_SCORE_TO_ADVANCE);
+	}
+	else
+	{
+		oozeLevel = 0;
+	}
+
+	juce::Rectangle<int> vialRect(origin.getX(), origin.getY(), 22, TILESIZE);
+	juce::Rectangle<int> oozeRect(origin.getX(), origin.getY() + oozeLevel, 22, TILESIZE - oozeLevel);
+
+	g.setColour(juce::Colours::black);
+	g.fillRect(vialRect);
+
+	g.setColour(juce::Colours::limegreen);
+	g.fillRect(oozeRect);
+
+	g.setColour(juce::Colours::white);
+	g.drawLine(origin.getX() + 15, origin.getY() + HALFTILE * 0.5f, origin.getX() + 22, origin.getY() + HALFTILE * 0.5f);
+	g.drawLine(origin.getX() + 10, origin.getY() + HALFTILE, origin.getX() + 22, origin.getY() + HALFTILE);
+	g.drawLine(origin.getX() + 15, origin.getY() + HALFTILE * 1.5f, origin.getX() + 22, origin.getY() + HALFTILE * 1.5f);
+	g.drawRect(vialRect);
 }
 
 void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)

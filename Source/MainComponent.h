@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -104,6 +104,14 @@ public:
 	 * @param g			The graphics context used for drawing.
 	 */
 	void DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw TODO
+	 *
+	 * @param origin	The point on the MainComponent window where the first bomb shall be drawn.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g);
 
 	/**
 	 * Draw the bombs next to the board, used to replace pipe tiles.

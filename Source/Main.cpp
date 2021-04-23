@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -34,7 +34,7 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Main.h"
 #include "MainComponent.h"
 
-void PipeDreamApplication::InitApplicationProperties()
+void PipeDreamerApplication::InitApplicationProperties()
 {
 	// TODO
 	juce::ApplicationProperties props;
@@ -71,7 +71,7 @@ void PipeDreamApplication::InitApplicationProperties()
 	std::sort(scorePairVector.begin(), scorePairVector.end(), cmp);
 }
 
-PipeDreamApplication::MainWindow::MainWindow(juce::String name)
+PipeDreamerApplication::MainWindow::MainWindow(juce::String name)
 	: DocumentWindow(name,
 		juce::Desktop::getInstance().getDefaultLookAndFeel()
 		.findColour(juce::ResizableWindow::backgroundColourId),

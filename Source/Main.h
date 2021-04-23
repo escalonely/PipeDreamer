@@ -4,7 +4,7 @@
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
   This file is part of the Pipe Dream clone found at:
-  https://github.com/escalonely/PipeDream
+  https://github.com/escalonely/PipeDreamer
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
@@ -38,10 +38,10 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * Main application.
  */
-class PipeDreamApplication : public juce::JUCEApplication
+class PipeDreamerApplication : public juce::JUCEApplication
 {
 public:
-	PipeDreamApplication() 
+	PipeDreamerApplication() 
 	{
 		InitApplicationProperties();
 	}
@@ -107,4 +107,4 @@ private:
 /**
  * This macro generates the main() routine that launches the app.
  */
-START_JUCE_APPLICATION(PipeDreamApplication)
+START_JUCE_APPLICATION(PipeDreamerApplication)
