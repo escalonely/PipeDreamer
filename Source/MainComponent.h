@@ -49,8 +49,41 @@ class MainComponent  :	public juce::Component,
 						public juce::ChangeListener
 {
 public:
+	/**
+	 * (Empty) pipe thickness in pixels.
+	 */
+	static const float PIPE_THICKNESS;
+
+	/**
+	 * Thickness of ooze inside pipes, in pixels.
+	 */
+	static const float OOZE_THICKNESS;
+
+	/**
+	 * GUI refresh interval in milliseconds.
+	 */
+	static const int GUI_REFRESH_RATE;
+
+	/**
+	 * Points gained in one round, necessary to advance to the next difficulty level.
+	 */
+	static const int MIN_SCORE_TO_ADVANCE;
+
+	/**
+	 * The Board and the TilePieces only know about their base score value. To obtain
+	 * the actual player score, this is multiplied by the score multiplier.
+	 */
+	static const int SCORE_MULTIPLIER;
+
+	/**
+	 * Class constructor.
+	 */
     MainComponent();
-    ~MainComponent() override;
+	
+	/**
+	 * Class destructor.
+	 */
+	~MainComponent() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
@@ -115,7 +148,7 @@ public:
 	/**
 	 * Draw the "ooze meter", i.e. the vial that indicates the countdown until ooze starts pumping out.
 	 *
-	 * @param origin	The point on the MainComponent window where the first bomb shall be drawn.
+	 * @param origin	The point on the MainComponent window to use as origin.
 	 * @param g			The graphics context used for drawing.
 	 */
 	void DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g);
@@ -123,10 +156,19 @@ public:
 	/**
 	 * Draw the bombs next to the board, used to replace pipe tiles.
 	 *
-	 * @param origin	The point on the MainComponent window where the first bomb shall be drawn.
+	 * @param origin	The point on the MainComponent window to use as origin.
 	 * @param g			The graphics context used for drawing.
 	 */
 	void DrawBombs(juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw the fast-forward button. 
+	 * The location is hard coded, see m_fastForwardButtonRect.
+	 *
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawFastForwardButton(juce::Graphics& g);
+
 
 private:
 	Board* m_board;
@@ -151,20 +193,19 @@ private:
 	juce::CriticalSection m_lock;
 
 	/**
-	 * Points gained in one round, necessary to advance to the next difficulty level.
-	 */
-	static const int MIN_SCORE_TO_ADVANCE;
-
-	/**
-	 * The Board and the TilePieces only know about their base score value. To obtain
-	 * the actual player score, this is multiplied by the score multiplier.
-	 */
-	static const int SCORE_MULTIPLIER;
-
-	/**
 	 * Hyperlink to the download URL.
 	 */
 	std::unique_ptr<juce::HyperlinkButton> m_hyperlink;
+
+	/**
+	 * Fast forward state. When true, ooze flows much more rapidly. Default is false.
+	 */
+	bool m_fastForward;
+
+	/**
+	 * Rectangle containing the fast-forward button.
+	 */
+	static const juce::Rectangle<int> m_fastForwardButtonRect;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
