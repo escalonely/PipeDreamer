@@ -3,89 +3,167 @@
 
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  This file is part of the Pipe Dream clone found at:
+  This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===============================================================================
 */
 
 
-#include "Main.h"
+#include <JuceHeader.h>
 #include "MainComponent.h"
+#include "Controller.h"
 
-void PipeDreamerApplication::InitApplicationProperties()
+
+/**
+ * Main application.
+ */
+class PipeDreamerApplication : public juce::JUCEApplication
 {
-	// TODO
-	juce::ApplicationProperties props;
-
-	juce::PropertiesFile::Options options;
-	options.applicationName = ProjectInfo::projectName;
-	options.filenameSuffix = ".settings";
-	options.osxLibrarySubFolder = "Application Support";
-	options.folderName = juce::File::getSpecialLocation(juce::File::SpecialLocationType::userApplicationDataDirectory).getChildFile(ProjectInfo::projectName).getFullPathName();
-	options.storageFormat = juce::PropertiesFile::storeAsXML;
-	props.setStorageParameters(options);
-
-	//props.getUserSettings()->setValue("Flynn", 12345);
-	//props.getUserSettings()->setValue("Bob", 2);
-	//props.getUserSettings()->setValue("Madmax", 32132);
-
-	juce::StringPairArray allData = props.getUserSettings()->getAllProperties();
-	juce::StringArray allkeys = allData.getAllKeys();
-
-	std::vector<std::pair<juce::String, int>> scorePairVector;
-	for (int i = 0; i < allData.size(); i++)
+public:
+	/**
+	 * Class constructor.
+	 */
+	PipeDreamerApplication()
 	{
-		juce::String name(allkeys[i]);
-		int score = props.getUserSettings()->getIntValue(allkeys[i]);
-
-		scorePairVector.push_back(std::pair<juce::String, int>(name, score));
 	}
 
-	// https://stackoverflow.com/questions/19842035/how-can-i-sort-a-stdmap-first-by-value-then-by-key
-	auto cmp = [](std::pair<juce::String, int> const & a, std::pair<juce::String, int> const & b)
+	/** 
+	 * Returns the application's name. 
+	 */
+	const juce::String getApplicationName() override 
 	{
-		return a.second > b.second;
+		return ProjectInfo::projectName; 
+	}
+
+	/** 
+	 * Returns the application's version number. 
+	 */
+	const juce::String getApplicationVersion() override 
+	{
+		return ProjectInfo::versionString; 
+	}
+	
+	/** 
+	 * Returns false, multiple instances of the app are not allowed.
+	 */
+	bool moreThanOneInstanceAllowed() override 
+	{ 
+		return false;
+	}
+
+	/** 
+	 * Called once when the application starts.
+	 * After the method returns, the normal event-dispatch loop will be run 
+	 * until the quit() method is called.
+	 *
+	 * @param commandLine	Parameter list, not including the name of the app.
+	 */
+	void initialise(const juce::String& commandLine) override
+	{
+		(void)commandLine;
+
+		// TODO: think about useful commandline options
+		// i.e.: starting level.
+
+		// Store pointers to the MainWindow and Controller so we can delete them on shutdown.
+		m_mainWindow.reset(new MainWindow(getApplicationName()));
+		m_controller.reset(Controller::GetInstance());
+	}
+
+	/**
+	 * Called after the event-dispatch loop has been terminated, 
+	 * to allow the application to clear up before exiting.
+	 */
+	void shutdown() override
+	{
+		// This deletes the unique_ptr.
+		m_mainWindow = nullptr;
+		m_controller = nullptr;
+	}
+
+	/**
+	 * Called when the operating system is trying to close the application.
+	 */
+	void systemRequestedQuit() override
+	{
+		quit();
+	}
+
+	/**
+	 * Indicates that the user has tried to start up another instance of the app.
+	 * This will be ignored.
+	 */
+	void anotherInstanceStarted(const juce::String& commandLine) override
+	{
+		(void)commandLine;
+	}
+
+	/**
+	 * This class implements the desktop window that contains an instance of MainComponent.
+	 */
+	class MainWindow : public juce::DocumentWindow
+	{
+	public:
+		/**
+		 * Class constructor.
+		 */
+		MainWindow(juce::String name)
+			: DocumentWindow(name, juce::Colours::black, DocumentWindow::allButtons)
+		{
+			setUsingNativeTitleBar(true);
+			setContentOwned(new MainComponent(), true);
+
+			setResizable(false, false);
+			centreWithSize(getWidth(), getHeight());
+
+			setVisible(true);
+		}
+
+		/**
+		 * This is called when the user tries to close this window.
+		 * Just ask the app to quit when this happens.
+		 */
+		void closeButtonPressed() override
+		{
+			JUCEApplication::getInstance()->systemRequestedQuit();
+		}
+
+	private:
+		JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainWindow)
 	};
-	std::sort(scorePairVector.begin(), scorePairVector.end(), cmp);
-}
 
-PipeDreamerApplication::MainWindow::MainWindow(juce::String name)
-	: DocumentWindow(name,
-		juce::Desktop::getInstance().getDefaultLookAndFeel()
-		.findColour(juce::ResizableWindow::backgroundColourId),
-		DocumentWindow::allButtons)
-{
-	setUsingNativeTitleBar(true);
-	setContentOwned(new MainComponent(), true);
+private:
+	/**
+	 * Pointer to MainWindow instance.
+	 */
+	std::unique_ptr<MainWindow> m_mainWindow;
 
-#if JUCE_IOS || JUCE_ANDROID
-	setFullScreen(true);
-#else
-	setResizable(false, false);
-	centreWithSize(getWidth(), getHeight());
-#endif
+	/**
+	 * Pointer to Controller singleton.
+	 */
+	std::unique_ptr<Controller> m_controller;
+};
 
-	setVisible(true);
-}
+/**
+ * This macro generates the main() routine that launches the app.
+ */
+START_JUCE_APPLICATION(PipeDreamerApplication)
