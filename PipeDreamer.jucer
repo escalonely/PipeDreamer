@@ -2,10 +2,12 @@
 
 <JUCERPROJECT id="Lwsp3c" name="PipeDreamer" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1"
-              version="0.0.1" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDreamer"
+              version="0.1" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDreamer"
               companyCopyright="Copyright (C) 2021 Bernardo Escalona.">
   <MAINGROUP id="O96DaU" name="PipeDreamer">
     <GROUP id="{66ABA4BA-CAD0-DDDA-65B0-2BFCC9FFE601}" name="Source">
+      <FILE id="xB51U8" name="Controller.cpp" compile="1" resource="0" file="Source/Controller.cpp"/>
+      <FILE id="ZTYszt" name="Controller.h" compile="0" resource="0" file="Source/Controller.h"/>
       <FILE id="KVUytk" name="Randomizer.cpp" compile="1" resource="0" file="Source/Randomizer.cpp"/>
       <FILE id="id1vXB" name="Randomizer.h" compile="0" resource="0" file="Source/Randomizer.h"/>
       <FILE id="tzAdFP" name="ScoreWindow.cpp" compile="1" resource="0" file="Source/ScoreWindow.cpp"/>
@@ -16,8 +18,7 @@
       <FILE id="j8JcJ6" name="Queue.h" compile="0" resource="0" file="Source/Queue.h"/>
       <FILE id="IDzCBV" name="TilePiece.cpp" compile="1" resource="0" file="Source/TilePiece.cpp"/>
       <FILE id="TILJZm" name="TilePiece.h" compile="0" resource="0" file="Source/TilePiece.h"/>
-      <FILE id="trEwuK" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
-      <FILE id="OU2AVU" name="Main.h" compile="0" resource="0" file="Source/Main.h"/>
+      <FILE id="OU2AVU" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="cZECLC" name="MainComponent.cpp" compile="1" resource="0"
             file="Source/MainComponent.cpp"/>
       <FILE id="zpZr05" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
