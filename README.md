@@ -6,13 +6,13 @@ PipeDreamer is a hobby project, is currently in development, and probably contai
 
 ## How to play?
 
-The objective of PipeDreamer is to build a pipeline that will allow the green **Ooze** to flow for as long as possible.
+The objective of PipeDreamer is to build a **Pipeline** that will allow the green **Ooze** to flow for as long as possible.
 
 ![GuiAnnotated3.png](Images/GuiAnnotated3.png "Game GUI overview")
 
 ### Game Grid
 
-* You start every level with an empty Grid. You place sections of **Pipe** by simply clicking on empty cells on the Grid.
+* You start every level with an empty **Grid**. You place sections of **Pipe** by simply clicking on empty cells on the **Grid**.
 
 ### Ooze Source
 
@@ -22,7 +22,7 @@ The objective of PipeDreamer is to build a pipeline that will allow the green **
 
 ### Pipe Queue
 
-* The **Queue** on the left side indicates which type of **Pipes** can be used next.
+* The **Queue** on the left side indicates which **Pipes** will be available next.
 * By clicking on an empty cell on the **Grid**, the **Pipe** at the very bottom of the **Queue** will be placed. 
 * The rest of the **Queue** will move down, and a new, random **Pipe** will appear at the top.
 
@@ -30,7 +30,7 @@ The objective of PipeDreamer is to build a pipeline that will allow the green **
 
 * The **Ooze-Meter** at the top-left corner will indicate how much time is left, before the **Ooze** begins flowing out of the **Source**.
 * After the **Ooze** starts pouring out, the **Ooze-Meter** will slowly become empty again.
-* If you manage to contain the **Ooze** inside the pipeline until the **Ooze-Meter** is completely empty, you will advance to the **Next Level**!
+* If you manage to contain the **Ooze** inside the pipeline until the **Ooze-Meter** is completely depleted, you will advance to the **Next Level**!
 
 ### Bombs
 
@@ -42,7 +42,7 @@ The objective of PipeDreamer is to build a pipeline that will allow the green **
 
 * You gain points for each **Pipe** through which the **Ooze** successfully flows.
 * **Cross-Pipes** give bonus points if the **Ooze** manages to flow in both directions, vertically and horizontally.
-* Your cummulative score carries over whenever you advance to the **Next Level**.
+* Your cumulative score carries over whenever you advance to the **Next Level**.
 
 ### Fast-Forward
 
@@ -50,3 +50,4 @@ The objective of PipeDreamer is to build a pipeline that will allow the green **
 
 ![GuiAnnotated4.png](Images/GuiAnnotated4.png "Progress GUI overview")
 
+### Have fun!
