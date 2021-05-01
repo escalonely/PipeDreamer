@@ -27,8 +27,11 @@ SOFTWARE.
 ===============================================================================
 */
 
+
 #include "Controller.h"
 
+
+// ---- Helper types and constants ----
 
 /**
  * Singleton initialization.
