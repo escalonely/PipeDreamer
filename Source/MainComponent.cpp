@@ -3,29 +3,26 @@
 
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  This file is part of the Pipe Dream clone found at:
+  This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
 
-Redistribution and use in source and binary forms, with or without modification, 
-are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Redistributions of source code must retain the above copyright notice, 
-this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Redistributions in binary form must reproduce the above copyright notice, 
-this list of conditions and the following disclaimer in the documentation and/or 
-other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, 
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, 
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED 
-OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===============================================================================
 */
@@ -37,23 +34,22 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Queue.h"
 #include "Randomizer.h"
 #include "ScoreWindow.h"
-//#include "Main.cpp"
 
-static constexpr int TILESIZE = 70;
-static constexpr int HALFTILE = TILESIZE / 2;
-static constexpr int BOARD_VSTARTPOS = 80;
+
+static constexpr int BOARD_VSTARTPOS = 80; // TODO: class constants
 static constexpr int BOARD_HSTARTPOS = 175;
 
 
 // ---- Helper types and constants ----
 
+const int MainComponent::TILESIZE(70);
+const int MainComponent::HALFTILE(TILESIZE / 2);
 const float MainComponent::PIPE_THICKNESS(20.0f);
 const float MainComponent::OOZE_THICKNESS(15.0f);
 const int MainComponent::GUI_REFRESH_RATE(60);
-const juce::Rectangle<int> MainComponent::m_fastForwardButtonRect(62, 576, 45, 25);
+const juce::Rectangle<int> MainComponent::m_fastForwardButtonRect(50, 550, 70, 45);
 
-const int MainComponent::MIN_SCORE_TO_ADVANCE(2000);
-const int MainComponent::SCORE_MULTIPLIER(100);
+const int MainComponent::MIN_SCORE_TO_ADVANCE(200); // TODO: move to Controller
 
 
 // ---- Class Implementation ----
@@ -71,13 +67,6 @@ MainComponent::MainComponent()
 	m_hyperlink->setFont(juce::Font("consolas", 18.0f, juce::Font::plain), false /* do not resize */);
 	m_hyperlink->setColour(juce::HyperlinkButton::textColourId, juce::Colours::grey);
 	addAndMakeVisible(m_hyperlink.get());
-
-	// TODO
-	//PipeDreamerApplication* app = dynamic_cast<PipeDreamerApplication*>(juce::JUCEApplication::getInstance());
-	//if (app != nullptr)
-	//{
-	//	app->InitApplicationProperties();
-	//}
 
 	setSize(900, 620);
 
@@ -115,6 +104,8 @@ void MainComponent::resized()
 
 void MainComponent::timerCallback()
 {
+	const juce::ScopedLock lock(m_lock);
+
 	// When it reaches 0, clicks are enabled again.
 	if (m_blockInteraction > 0)
 		m_blockInteraction--;
@@ -139,7 +130,7 @@ void MainComponent::timerCallback()
 			stopTimer();
 
 			ScoreWindow::ScoreDetails details;
-			details.score = m_board->GetScoreBase() * SCORE_MULTIPLIER;
+			details.score = m_board->GetScoreValue();
 
 			// Carryover is the score gained from all previous levels.
 			details.carryover = m_cumulativeScore;
@@ -147,7 +138,9 @@ void MainComponent::timerCallback()
 			// Add level-based bonus. This mechanic helps ensure that players
 			// who make it further into the game end up with higher score than 
 			// players who just manage a very long pipe on level 1.
-			details.bonus = m_difficultyLevel * SCORE_MULTIPLIER;
+			details.bonus = 0;
+			if (m_difficultyLevel > 1)
+				details.bonus = m_difficultyLevel * m_difficultyLevel * 15;
 
 			// Add score gained to the cumulative score.
 			details.total = details.score + details.bonus + details.carryover;
@@ -158,11 +151,18 @@ void MainComponent::timerCallback()
 			details.level = m_difficultyLevel;
 			details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
 
+			juce::Point<int> windowOrigin(0, 0);
+			if (details.advance)
+			{
+				// Position the small AdvanceWindow in the middle of the window.
+				windowOrigin = juce::Point<int>(320, 170);
+			}
+
 			// Show scoreboard overlay.
-			m_scoreWindow = new ScoreWindow(details);
+			m_scoreWindow = ScoreWindow::CreateScoreWindow(details);
 			m_scoreWindow->addChangeListener(this);
 			addAndMakeVisible(m_scoreWindow);
-			m_scoreWindow->setBounds(juce::Rectangle<int>(320, 180, 400, 320));
+			m_scoreWindow->setTopLeftPosition(windowOrigin);
 		}
 	}
 
@@ -280,7 +280,7 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 	}
 }
 
-juce::Colour MainComponent::GetCurrentTileColor() const
+juce::Colour MainComponent::GetTileColourForLevel(int difficultyLevel)
 {
 	static const juce::Colour colorsPerLevel[] = {
 		juce::Colour(125, 125, 125),	// Level 1
@@ -297,13 +297,13 @@ juce::Colour MainComponent::GetCurrentTileColor() const
 		juce::Colours::orangered,		// Level 12
 	};
 
-	// m_difficultyLevel starts at 1
+	// difficultyLevel starts at 1
 	int arraySize = sizeof(colorsPerLevel) / sizeof(*colorsPerLevel);
-	int level = m_difficultyLevel - 1;
-	if (level >= arraySize)
-		level = arraySize - 1;
+	difficultyLevel--;
+	if (difficultyLevel >= arraySize)
+		difficultyLevel = arraySize - 1;
 
-	return colorsPerLevel[level];
+	return colorsPerLevel[difficultyLevel];
 }
 
 float MainComponent::GetCurrentOozePerPump() const
@@ -340,9 +340,9 @@ int MainComponent::GetCurrentCountdown() const
 {
 	static const int countdownPerLevel[] = {
 		320,	// Level 1
-		280,	// Level 2
-		240,	// Level 3
-		220,	// Level 4
+		290,	// Level 2
+		260,	// Level 3
+		230,	// Level 4
 		200,	// Level 5
 		180,	// Level 6
 		160,	// Level 7
@@ -364,8 +364,6 @@ int MainComponent::GetCurrentCountdown() const
 
 void MainComponent::paint(juce::Graphics& g)
 {
-	const juce::ScopedLock lock(m_lock);
-
 	// Background colour
 	g.fillAll(juce::Colour(67, 67, 67));
 
@@ -434,7 +432,7 @@ void MainComponent::paint(juce::Graphics& g)
 
 void MainComponent::DrawLevelAndScore(juce::Graphics& g)
 {
-	int playerScore = m_board->GetScoreBase() * SCORE_MULTIPLIER;
+	int playerScore = m_board->GetScoreValue();
 
 	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
 	g.setColour(juce::Colours::grey);
@@ -458,7 +456,7 @@ void MainComponent::DrawLevelAndScore(juce::Graphics& g)
 	//g.drawRect(textRect, 1.0f);
 
 	// Show difficulty level number in this level's tile color.
-	g.setColour(GetCurrentTileColor());
+	g.setColour(GetTileColourForLevel(m_difficultyLevel));
 	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92, 20, 52, HALFTILE);
 	g.drawText(juce::String(m_difficultyLevel), textRect, juce::Justification::left, false);
 	//g.drawRect(textRect, 1.0f);
@@ -472,7 +470,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 		if (pipe != nullptr)
 		{
 			// Draw tile's Background color
-			g.setColour(GetCurrentTileColor());
+			g.setColour(GetTileColourForLevel(m_difficultyLevel));
 			g.fillRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE);
 
 			juce::Line<int> line;
@@ -1076,7 +1074,7 @@ void MainComponent::DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin,
 
 		// Little lines along the pipe, which make the separation between horizontal and vertical 
 		// components of the cross-pipe more visually obvious.
-		g.setColour(GetCurrentTileColor());
+		g.setColour(GetTileColourForLevel(m_difficultyLevel));
 		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 		{
 			// Vertical little lines
@@ -1208,10 +1206,10 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 		// Starts at 0, goes to vialHeight		
 		oozeHeight = static_cast<int>(oozeMaxHeight - ((m_countDown * oozeMaxHeight) / GetCurrentCountdown()));
 	}
-	else if (m_board->GetScoreBase() * SCORE_MULTIPLIER < MIN_SCORE_TO_ADVANCE)
+	else if (m_board->GetScoreValue() < MIN_SCORE_TO_ADVANCE)
 	{
 		// Starts at vialHeight, goes to 0.
-		oozeHeight = static_cast<int>(((MIN_SCORE_TO_ADVANCE - (m_board->GetScoreBase() * SCORE_MULTIPLIER)) * oozeMaxHeight) / MIN_SCORE_TO_ADVANCE);
+		oozeHeight = static_cast<int>(((MIN_SCORE_TO_ADVANCE - (m_board->GetScoreValue())) * oozeMaxHeight) / MIN_SCORE_TO_ADVANCE);
 	}
 	else
 	{
@@ -1223,7 +1221,6 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 
 	// Vial outline and markings.
 	g.setColour(juce::Colours::black);
-	//static constexpr float halfVial = 100;
 	g.drawLine(origin.getX() + 15.0f, 1.0f + origin.getY() + vialHeight * 0.25f,	origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.25f,	2.0f);
 	g.drawLine(origin.getX() + 10.0f, 1.0f + origin.getY() + vialHeight * 0.5f,		origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.5f,	2.0f);
 	g.drawLine(origin.getX() + 15.0f, 1.0f + origin.getY() + vialHeight * 0.75f,	origin.getX() + 22.0f, 1.0f + origin.getY() + vialHeight * 0.75f,	2.0f);
@@ -1259,25 +1256,30 @@ void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
 
 void MainComponent::DrawFastForwardButton(juce::Graphics& g)
 {
-	float radius = m_fastForwardButtonRect.getHeight() / 2.0f;
-	juce::Point<float> origin(m_fastForwardButtonRect.getX() + 12.0f, m_fastForwardButtonRect.getY() + radius);
+	float radius = 13;
+	juce::Point<float> origin(m_fastForwardButtonRect.getX() + 24.0f, m_fastForwardButtonRect.getY() + 23.0f);
 
 	juce::Path ffwdPath;
 	ffwdPath.addPolygon(juce::Point<float>(static_cast<float>(origin.getX()), static_cast<float>(origin.getY())), 3, radius, -0.52f);
 	ffwdPath.addPolygon(juce::Point<float>(origin.getX() + 19.0f, static_cast<float>(origin.getY())), 3, radius, -0.52f);
 
 	float thickness = 1.5f;
-	g.setColour(juce::Colours::grey);
+	juce::Colour iconColour(juce::Colours::grey);
+	juce::Colour frameColour(juce::Colour(27, 27, 27));
 	if (m_fastForward)
 	{
 		thickness = 2.5f;
-		g.setColour(juce::Colours::red);
+		iconColour = juce::Colours::red;
+		frameColour = juce::Colours::black;
 	}
 
+	// Draw ff icon (two little triangles)
+	g.setColour(iconColour);
 	g.fillPath(ffwdPath);
 	g.setColour(juce::Colours::white);
 	g.strokePath(ffwdPath, juce::PathStrokeType(thickness, juce::PathStrokeType::curved));
 
-	// Test rect
-	//g.drawRect(m_fastForwardButtonRect.toFloat());
+	// Frame around button
+	g.setColour(frameColour);
+	g.drawRect(m_fastForwardButtonRect.toFloat(), thickness);
 }

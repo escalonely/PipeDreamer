@@ -3,29 +3,26 @@
 
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  This file is part of the Pipe Dream clone found at:
+  This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===============================================================================
 */
@@ -35,20 +32,47 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ScoreWindow.h"
 #include "MainComponent.h"
 
+
+// ---- Helper types and constants ----
+
+const int ScoreWindow::BUTTON_HEIGHT(56);
+const int HighScoreWindow::MAX_SCORE_ROWS(12);
+
+
+// --- ScoreWindow ---
+
 ScoreWindow::ScoreWindow(ScoreDetails details)
 	:	m_details(details),
 		m_command(CMD_NONE)
 {
+
 }
 
 ScoreWindow::~ScoreWindow()
 {
+
 }
 
-void ScoreWindow::paint (juce::Graphics& g)
+ScoreWindow* ScoreWindow::CreateScoreWindow(ScoreDetails details)
 {
-	int width = getLocalBounds().getWidth();
-	int buttonHeight = getLocalBounds().getHeight() / 5;
+	ScoreWindow* ret(nullptr);
+
+	if (details.advance)
+		ret = new AdvanceWindow(details);
+	else
+		ret = new HighScoreWindow(details);
+
+	return ret;
+}
+
+ScoreWindow::Command ScoreWindow::GetCommand() const
+{
+	return m_command;
+}
+
+void ScoreWindow::paint(juce::Graphics& g)
+{
+	int buttonHeight = m_messageBoxRect.getHeight() / 5;
 
 	juce::String messageText("You Lose! :(\n");
 	juce::String buttonText("Restart Game");
@@ -58,46 +82,45 @@ void ScoreWindow::paint (juce::Graphics& g)
 		buttonText = juce::String("Continue to Next Level");
 	}
 
-	// Background color
-	g.fillAll(juce::Colour(27, 27, 27));
+	// Background colour (whole window)
+	g.fillAll(MainComponent::GetTileColourForLevel(m_details.level));
 
-	// Frame
-	g.setColour(juce::Colours::grey);
-	juce::Rectangle<int> rect(5, 5, width - 10, getLocalBounds().getHeight() - 10);
-	g.drawRect(rect, 2);
+	// Messagebox background
+	g.setColour(juce::Colour(27, 27, 27));
+	g.fillRect(m_messageBoxRect);
+
+	// Frame around messagebox
+	g.setColour(juce::Colours::black);
+	g.drawRect(m_messageBoxRect, 4);
+
+	// Build score text
+	messageText << "Score: " << juce::String(m_details.score) << "\n";
+	if (m_details.bonus > 0)
+		messageText << "Level Bonus: " << juce::String(m_details.bonus) << "\n";
+	if (m_details.carryover > 0)
+		messageText << "Carry Over: " << juce::String(m_details.carryover) << "\n";
+	if (m_details.total != m_details.score)
+		messageText << "Total: " << juce::String(m_details.total);
 
 	// Display score
-	messageText << juce::String::formatted("Score: %d\nLevel Bonus: %d\nCarry Over: %d\nTotal: %d", 
-											m_details.score, m_details.bonus, m_details.carryover, m_details.total);
 	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
-	rect = juce::Rectangle<int>(5, 5, width - 10, buttonHeight * 3);
-    g.drawFittedText(messageText, rect, juce::Justification::centred, true);
+	g.setColour(juce::Colours::grey);
+	juce::Rectangle<int> subRect(m_messageBoxRect.getX() + 5, m_messageBoxRect.getY() + 5, m_messageBoxRect.getWidth() - 10, buttonHeight * 3);
+	g.drawFittedText(messageText, subRect, juce::Justification::centred, true);
 
 	// Continue button
-	rect = juce::Rectangle<int>(10, (buttonHeight * 3) + 5, width - 20, buttonHeight - 10);
-	g.drawFittedText(buttonText, rect, juce::Justification::centred, true);
-	g.drawRect(rect);
+	g.drawFittedText(buttonText, m_okButtonRect, juce::Justification::centred, true);
+	g.drawRect(m_okButtonRect);
 
 	// Quit button
-	rect = juce::Rectangle<int>(10, (buttonHeight * 4) - 0, width - 20, buttonHeight - 10);
-    g.drawFittedText("Quit", rect, juce::Justification::centred, true);
-	g.drawRect(rect);
-}
-
-void ScoreWindow::resized()
-{
+	g.drawFittedText("Quit", m_quitButtonRect, juce::Justification::centred, true);
+	g.drawRect(m_quitButtonRect);
 }
 
 void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 {
-	int width = getLocalBounds().getWidth();
-	int buttonHeight = getLocalBounds().getHeight() / 5;
-
 	juce::Point<int> clickPos = event.getMouseDownPosition();
-	juce::Rectangle<int> continueRect(10, (buttonHeight * 3) + 5, width - 20, buttonHeight - 10);
-	juce::Rectangle<int> quitRect(10, (buttonHeight * 4) - 0, width - 20, buttonHeight - 10);
-
-	if (continueRect.contains(clickPos))
+	if (m_okButtonRect.contains(clickPos))
 	{
 		if (m_details.advance)
 			m_command = CMD_CONTINUE;
@@ -105,7 +128,7 @@ void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 			m_command = CMD_RESTART;
 	}
 
-	else if (quitRect.contains(clickPos))
+	else if (m_quitButtonRect.contains(clickPos))
 		m_command = CMD_QUIT;
 
 	// If a button was clicked, send a callback.
@@ -113,8 +136,217 @@ void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 		sendChangeMessage();
 }
 
-ScoreWindow::Command ScoreWindow::GetCommand() const
+
+// --- AdvanceWindow ---
+
+AdvanceWindow::AdvanceWindow(ScoreDetails details)
+	: ScoreWindow(details)
 {
-	return m_command;
+	setSize(400, 320);
+
+	// Initialize rectangles for the messageBox, and the two buttons
+	m_messageBoxRect = juce::Rectangle<int>(5, 5, getLocalBounds().getWidth() - 10, getLocalBounds().getHeight() - 10);
+
+	int buttonHeight = m_messageBoxRect.getHeight() / 5;
+
+	m_okButtonRect = juce::Rectangle<int>(10, m_messageBoxRect.getY() + (buttonHeight * 3) + 10, m_messageBoxRect.getWidth() - 10, buttonHeight - 10);
+	m_quitButtonRect = juce::Rectangle<int>(10, m_messageBoxRect.getY() + (buttonHeight * 4) + 5, m_messageBoxRect.getWidth() - 10, buttonHeight - 10); 
+}
+
+void AdvanceWindow::paint(juce::Graphics& g)
+{
+	ScoreWindow::paint(g);
+}
+
+
+// --- HighScoreWindow ---
+
+HighScoreWindow::HighScoreWindow(ScoreDetails details)
+	: ScoreWindow(details)
+{
+	setSize(900, 620);
+	
+	int buttonVPos = getLocalBounds().getHeight() - 192;
+	int rectWidth = 320;
+
+	// Initialize rectangles for the messageBox, and the two buttons
+	m_messageBoxRect = juce::Rectangle<int>(MainComponent::TILESIZE, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2));
+	m_okButtonRect = juce::Rectangle<int>(MainComponent::TILESIZE + 5, buttonVPos, rectWidth - 10, BUTTON_HEIGHT);
+	m_quitButtonRect = juce::Rectangle<int>(MainComponent::TILESIZE + 5, buttonVPos + BUTTON_HEIGHT + 5, rectWidth - 10, BUTTON_HEIGHT);
+
+	Controller* controller = Controller::GetInstance();
+	if (controller != nullptr)
+	{
+		// Get the high score list, including the new score just achieved by the player.
+		scoreEntry newEntry("placeholder", m_details.total);
+		std::vector<scoreEntry> scoreHash = controller->GetAugmentedScoreHash(newEntry);
+
+		// Initialize local lists of cached names/scores.
+		RefreshCachedScore(scoreHash);
+	}
+}
+
+void HighScoreWindow::RefreshCachedScore(std::vector<scoreEntry>& scoreHash)
+{
+	m_nameCache.clear();
+	m_scoreCache.clear();
+	m_dateCache.clear();
+	m_nameCache.reserve(scoreHash.size());
+	m_scoreCache.reserve(scoreHash.size());
+	m_dateCache.reserve(scoreHash.size());
+
+	// Create a local, sorted cache of names, dates, and scores, for quick access during paint().
+	int maxNumRows = MAX_SCORE_ROWS;
+	std::vector<scoreEntry>::iterator iter = scoreHash.begin();
+	while (iter != scoreHash.end() && maxNumRows > 0)
+	{
+		juce::String dateStr;
+		juce::String nameStr(iter->first);
+		if (nameStr == "placeholder")
+		{ 
+			// Instead of timestamp, make it even more obvious that the player should enter their name.
+			dateStr = "New Score!";
+
+			// Create and initialize TextEditor component, where the player can type his name.
+			m_nameEditor.reset(new juce::TextEditor());
+			m_nameEditor->setMultiLine(false);
+			m_nameEditor->setReturnKeyStartsNewLine(false);
+			m_nameEditor->setCaretVisible(true);
+			juce::String filter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.-");
+			m_nameEditor->setInputRestrictions(8, filter);
+			m_nameEditor->setFont(juce::Font("consolas", 25.0f, juce::Font::bold)); // TODO fontsize const
+			m_nameEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
+			m_nameEditor->setColour(juce::TextEditor::textColourId, juce::Colours::yellow);
+			m_nameEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::yellow);
+			m_nameEditor->setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::white);
+			m_nameEditor->setColour(juce::TextEditor::highlightedTextColourId, juce::Colours::white);
+			m_nameEditor->setTextToShowWhenEmpty("name", juce::Colours::grey);
+			m_nameEditor->addListener(this);
+			addAndMakeVisible(m_nameEditor.get());
+		}
+		else
+		{
+			// The first half of the name is actually a timestamp.
+			// Split the timestamp from the name and cache each separately. Cut the daytime, only keep the date.
+			dateStr = nameStr.upToFirstOccurrenceOf("@", false /* don't include separator */, true /* ignore case */);
+			nameStr = nameStr.fromFirstOccurrenceOf(";", false /* don't include separator */, true /* ignore case */);
+		}
+
+		m_nameCache.push_back(nameStr);
+		m_scoreCache.push_back(iter->second);
+		m_dateCache.push_back(dateStr);
+
+		++iter;
+		maxNumRows--;
+	}
+}
+
+void HighScoreWindow::paint(juce::Graphics& g)
+{
+	// Draws the player score breakdown panel.
+	ScoreWindow::paint(g);
+
+	int rectWidth = (getLocalBounds().getWidth() - 320) - (MainComponent::TILESIZE * 2);
+
+	// High-score box background colour
+	g.setColour(juce::Colour(27, 27, 27));
+	g.fillRect(juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2)));
+
+	// Frame
+	g.setColour(juce::Colours::black);
+	g.drawRect(juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2)), 4);
+
+	// Title
+	g.setColour(juce::Colours::grey);
+	g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
+	g.drawText("High Score", juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE + 10, rectWidth, 60), juce::Justification::centred);
+
+	int vPos = MainComponent::TILESIZE + 80;
+	int hPosName = MainComponent::TILESIZE + 360;
+	int hPosScore = MainComponent::TILESIZE + 460;
+	int hPosDate = MainComponent::TILESIZE + 590;
+	int fieldHeight = 30;
+	int nameWidth = 100;
+	int scoreWidth = 100;
+	int dateWidth = 130;
+	float fontSize = 25.0f; // TODO const
+	g.setFont(juce::Font("consolas", 25.0f, juce::Font::plain));
+
+	for (int i = 0; i < m_nameCache.size(); i++)
+	{
+		// Draw player name, OR position the TextEditor used to enter the players name
+		g.setFont(juce::Font("consolas", fontSize, juce::Font::bold));
+		if (m_nameCache[i] == "placeholder")
+			m_nameEditor->setBounds(juce::Rectangle<int>(hPosName, vPos, nameWidth, fieldHeight));
+		else
+			g.drawText(m_nameCache[i], juce::Rectangle<int>(hPosName, vPos, nameWidth, fieldHeight), juce::Justification::left, false);
+
+		// Frame around name
+		//g.drawRect(juce::Rectangle<int>(hPosName, vPos, nameWidth, fieldHeight));
+
+		// Draw score
+		g.drawText(juce::String(m_scoreCache[i]), juce::Rectangle<int>(hPosScore, vPos, scoreWidth, fieldHeight), juce::Justification::right, false);
+		//g.drawRect(juce::Rectangle<int>(hPosScore, vPos, scoreWidth, fieldHeight));
+
+		// Draw date
+		g.setFont(juce::Font("consolas", fontSize, juce::Font::plain));
+		g.drawText(juce::String(m_dateCache[i]), juce::Rectangle<int>(hPosDate, vPos, dateWidth, fieldHeight), juce::Justification::right, false);
+		//g.drawRect(juce::Rectangle<int>(hPosDate, vPos, dateWidth, fieldHeight));
+
+		vPos += fieldHeight + 2;
+	}
+}
+
+void HighScoreWindow::textEditorTextChanged(juce::TextEditor& editor)
+{
+	editor.setText(editor.getText().toUpperCase(), false /* do not trigger change signal */);
+}
+
+void HighScoreWindow::textEditorReturnKeyPressed(juce::TextEditor& editor)
+{
+	ExitTextEditor(editor);
+}
+
+void HighScoreWindow::textEditorEscapeKeyPressed(juce::TextEditor& editor)
+{
+	ExitTextEditor(editor);
+}
+
+void HighScoreWindow::textEditorFocusLost(juce::TextEditor& editor)
+{
+	ExitTextEditor(editor);
+}
+
+void HighScoreWindow::ExitTextEditor(juce::TextEditor& editor)
+{
+	Controller* controller = Controller::GetInstance();
+	if (controller != nullptr)
+	{
+		// Timestamp in the format 29.04.2021@18:54:00
+		juce::String nameStr(juce::Time::getCurrentTime().formatted("%d.%m.%Y@%H:%M:%S"));
+
+		// Append name entered by the player.
+		// Use default name if none was entered.
+		if (editor.getText().isEmpty())
+			nameStr << juce::String(";unknown");
+		else
+			nameStr << juce::String(";") << editor.getText();
+
+		// Save the player's new score into the App Properties.
+		scoreEntry newEntry(nameStr, m_details.total);
+		controller->SaveScoreEntry(newEntry);
+
+		// Get the now updated high score list. Send a zero-score entry as dummy.
+		std::vector<scoreEntry> scoreHash = controller->GetAugmentedScoreHash(scoreEntry("",0));
+
+		// Initialize local lists of cached names/scores.
+		RefreshCachedScore(scoreHash);
+	}
+
+	// Delete TextEditor component, so that the entered name is 
+	// displayed as normal text like the rest of the entries.
+	m_nameEditor.reset(nullptr);
+
+	repaint();
 }
 
