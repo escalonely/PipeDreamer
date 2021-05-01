@@ -3,29 +3,26 @@
 
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  This file is part of the Pipe Dream clone found at:
+  This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===============================================================================
 */
@@ -34,10 +31,11 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Board.h"
 #include "Randomizer.h"
 
+
 // ---- Helper types and constants ----
 
 const int Board::MAX_NUM_BOMBS(5);
-const int Board::SCORE_BASE_FOR_FREE_BOMB(5);
+const int Board::SCORE_FOR_FREE_BOMB(50);
 
 
 // ---- Class Implementation ----
@@ -63,7 +61,7 @@ Board::~Board()
 
 void Board::Reset()
 {
-	m_scoreBase = 0;
+	m_score = 0;
 	m_scoreUntilFreeBomb = 0;
 	m_numBombs = MAX_NUM_BOMBS;
 
@@ -132,13 +130,13 @@ bool Board::Pump(float amount)
 		oozingPipe->Pump(amount);
 		if (oozingPipe->IsFull())
 		{
-			m_scoreBase += oozingPipe->GetScoreBase();
+			m_score += oozingPipe->GetScoreValue();
 
-			// Once this score reaches SCORE_BASE_FOR_FREE_BOMB, the number of available 
+			// Once this score reaches SCORE_FOR_FREE_BOMB, the number of available 
 			// bombs will increase by one. After that, the score until the next restored
 			// bomb will be 0 again.
-			m_scoreUntilFreeBomb += oozingPipe->GetScoreBase();
-			if (m_scoreUntilFreeBomb >= SCORE_BASE_FOR_FREE_BOMB)
+			m_scoreUntilFreeBomb += oozingPipe->GetScoreValue();
+			if (m_scoreUntilFreeBomb >= SCORE_FOR_FREE_BOMB)
 			{
 				if (m_numBombs < MAX_NUM_BOMBS)
 					m_numBombs++;
@@ -221,9 +219,9 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 	return ret;
 }
 
-int Board::GetScoreBase() const
+int Board::GetScoreValue() const
 {
-	return m_scoreBase;
+	return m_score;
 }
 
 void Board::CreateRandomStart()
@@ -270,5 +268,5 @@ bool Board::PopBomb()
 
 int Board::GetPercentUntilFreeBomb()
 {
-	return static_cast<int>((m_scoreUntilFreeBomb * 100) / SCORE_BASE_FOR_FREE_BOMB);
+	return static_cast<int>((m_scoreUntilFreeBomb * 100) / SCORE_FOR_FREE_BOMB);
 }

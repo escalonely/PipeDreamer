@@ -3,29 +3,26 @@
 
 Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
 
-  This file is part of the Pipe Dream clone found at:
+  This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation and/or
-other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
-OF THE POSSIBILITY OF SUCH DAMAGE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ===============================================================================
 */
@@ -36,6 +33,9 @@ OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <map>
 #include "TilePiece.h"
+
+
+// ---- Class Definition ----
 
 /**
  * Class which represents the grid where pipe tiles can be placed.
@@ -49,9 +49,9 @@ public:
 	static const int MAX_NUM_BOMBS;
 
 	/**
-	 * Score base required to restore a used up bomb.
+	 * Score points required to restore a used up bomb.
 	 */
-	static const int SCORE_BASE_FOR_FREE_BOMB;
+	static const int SCORE_FOR_FREE_BOMB;
 
 	/**
 	 * Class constructor.
@@ -81,9 +81,9 @@ public:
 	/**
 	 * Get the score gained so far in this round.
 	 *
-	 * @return	The score, in number of tiles.
+	 * @return	The score points on the board.
 	 */
-	int GetScoreBase() const;
+	int GetScoreValue() const;
 
 	/**
 	 * Get the number of bombs still available this round.
@@ -120,13 +120,13 @@ private:
 	typedef std::pair<int, int> Coord;
 	std::map<Coord, TilePiece*> m_tileMap;
 
-	int m_scoreBase;
+	int m_score;
 
 	int m_numBombs;
 
 	/**
-	 * Score base until an used up bomb will be restored.
-	 * Once SCORE_BASE_FOR_FREE_BOMB is reached, this counter is set back to 0.
+	 * Score points until an used up bomb will be restored.
+	 * Once SCORE_FOR_FREE_BOMB is reached, this counter is set back to 0.
 	 */
 	int m_scoreUntilFreeBomb;
 };
