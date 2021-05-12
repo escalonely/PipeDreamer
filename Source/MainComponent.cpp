@@ -151,12 +151,20 @@ void MainComponent::timerCallback()
 			details.level = m_difficultyLevel;
 			details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
 
+			// Sound effect to trigger, depends on whether the player advanced to next level.
+			Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
+
 			juce::Point<int> windowOrigin(0, 0);
 			if (details.advance)
 			{
 				// Position the small AdvanceWindow in the middle of the window.
 				windowOrigin = juce::Point<int>(320, 170);
+
+				soundID = Controller::SOUND_NOTIFY; // TODO: change to SOUND_LEVEL_UP
 			}
+
+			// Trigger sound effect.
+			Controller::GetInstance()->QueueSound(soundID);
 
 			// Show scoreboard overlay.
 			m_scoreWindow = ScoreWindow::CreateScoreWindow(details);
@@ -193,7 +201,11 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 						TILESIZE, TILESIZE);
 					if (tileRect.contains(clickPos))
 					{
+						// TODO explain
 						static constexpr int framesInteractionBlocked = 5;
+
+						// Default sound effect for placing pipes on the grid.
+						Controller::SoundID soundID(Controller::SOUND_CLICK);
 
 						TilePiece* clickedTile = m_board->GetTile(i, j);
 						bool replace(clickedTile->GetType() == TilePiece::TYPE_NONE);
@@ -208,13 +220,16 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 							{
 								replace = true;
 
-								// Using bombs disables actions for a few more frames.
-								m_blockInteraction += framesInteractionBlocked;
+								// Sound effect should be explosive instead.
+								soundID = Controller::SOUND_EXPLODE;
 							}
 						}
 
 						if (replace)
 						{
+							// Trigger approproate sound effect.
+							Controller::GetInstance()->QueueSound(soundID);
+
 							// Grab the next piece in the queue, and...
 							TilePiece::Type newType = m_queue->Pop();
 
