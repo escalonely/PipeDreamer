@@ -47,6 +47,17 @@ class Controller
 {
 public:
 	/**
+	 * Represents exit state from the score window.
+	 */
+	enum Command
+	{
+		CMD_NONE = 0,
+		CMD_QUIT,
+		CMD_RESTART,
+		CMD_CONTINUE
+	};
+
+	/**
 	 * Game sound IDs.
 	 */
 	enum SoundID
@@ -104,6 +115,18 @@ public:
 	static bool HigherScoreThan(std::pair<juce::String, int> const &a, std::pair<juce::String, int> const &b);
 
 	/**
+	 * Called by MainComponent at every framerate tick.
+	 * TODO remove param score
+	 */
+	void Pump(int score);
+
+	/**
+	 * Called by MainComponent at the end of every round, when leaving the ScoreWindow.
+	 * TODO 
+	 */
+	void Reset(Command cmd);
+
+	/**
 	 * Wakes up the AudioThread with a specific sound to be played once it is awake.
 	 * 
 	 * @param soundID	Sound to trigger in AudioThread::run().
@@ -138,7 +161,7 @@ private:
 		/**
 		 * Used to signal which sound is to be played once the AudioThread is running.
 		 */
-		std::atomic<SoundID> m_soundID = SoundID::SOUND_NONE;
+		std::atomic<SoundID> m_soundID = { SoundID::SOUND_NONE };
 	};
 
 	/**
@@ -208,6 +231,11 @@ private:
 	 * Map of sound sources. Keys are the soundIDs, values are AudioFormatReaderSource.
 	 */
 	std::map<SoundID, SoundSource> m_soundSources;
+
+	/**
+	 * TODO
+	 */
+	bool m_enoughScoreToLevelUp = false;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Controller)
 };

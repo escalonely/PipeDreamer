@@ -33,6 +33,9 @@ SOFTWARE.
 
 // ---- Helper types and constants ----
 
+const int MIN_SCORE_TO_ADVANCE(200); // TODO: make public const member of Controller
+
+
 /**
  * Singleton initialization.
  */
@@ -50,8 +53,7 @@ Controller::Controller()
 	InitApplicationProperties();
 
 	// Init sounds.
-	// !!! TODO: sounds disabled for now. !!!
-	// InitAudio();
+	InitAudio();
 }
 
 Controller::~Controller()
@@ -138,6 +140,28 @@ bool Controller::HigherScoreThan(std::pair<juce::String, int> const &a, std::pai
 	return a.second > b.second;
 }
 
+void Controller::Pump(int score)
+{
+	if (!m_enoughScoreToLevelUp)
+	{
+		if (score >= MIN_SCORE_TO_ADVANCE)
+		{
+			// The player just gained enough points 
+			// to advance to the next level. Notify with a sound.
+			QueueSound(SOUND_NOTIFY);
+			m_enoughScoreToLevelUp = true;
+		}
+	}
+}
+
+void Controller::Reset(Controller::Command cmd)
+{
+	// TODO: refactoring 
+	(void)cmd;
+
+	m_enoughScoreToLevelUp = false;
+}
+
 void Controller::InitAudio()
 {
 	// Enable support for WAV files and other commom formats.
@@ -155,38 +179,35 @@ void Controller::InitAudio()
 	{
 		for (int i = SOUND_CLICK; i < SoundID::SOUND_MAX; i++)
 		{
-			juce::String filePath;
+			std::unique_ptr<juce::InputStream> inputStream;
+
 			SoundID sId = static_cast<SoundID>(i);
 			switch (sId)
 			{
 				case SOUND_CLICK:
-					filePath = "../../Resources/Sounds/mixkit-video-game-retro-click-237.wav";
+					inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::tap_wav, BinaryData::tap_wavSize, true);
 					break;
 				case SOUND_EXPLODE:
-					filePath = "../../Resources/Sounds/mixkit-arcade-game-explosion-1699.wav";
+					inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::explode_wav, BinaryData::explode_wavSize, true);
 					break;
 				case SOUND_NOTIFY:
-					filePath = "../../Resources/Sounds/mixkit-retro-game-notification-212.wav";
+					inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::notify_wav, BinaryData::notify_wavSize, true);
 					break;
 				case SOUND_LEVEL_UP:
-					filePath = "../../Resources/Sounds/mixkit-arcade-game-explosion-1699.wav"; 
+					inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::win_wav, BinaryData::win_wavSize, true);
 					break;
 				case SOUND_GAME_OVER:
-					filePath = "../../Resources/Sounds/mixkit-arcade-retro-game-over-213.wav";
+					inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::lose_wav, BinaryData::lose_wavSize, true);
 					break;
 				default:
 					break;
 			}
 
-			juce::File soundFile(juce::File::getCurrentWorkingDirectory().getChildFile(filePath));
-			if (soundFile.existsAsFile())
-			{
-				// Create a new AudioSource which gets its data from the file above
-				SoundSource source(new juce::AudioFormatReaderSource(audioFormatManager.createReaderFor(soundFile), true));
+			// Create a new AudioSource which gets its data from the binary stream above.
+			SoundSource source(new juce::AudioFormatReaderSource(audioFormatManager.createReaderFor(std::move(inputStream)), true));
 
-				// Store this source in a map to be easily found later, in Controller::PlaySound().
-				m_soundSources.insert(std::make_pair(sId, std::move(source)));
-			}
+			// Store this source in a map to be easily found later, in Controller::PlaySound().
+			m_soundSources.insert(std::make_pair(sId, std::move(source)));
 		}
 
 		// Audio is to be mixed by m_audioMixer and passed on to 
@@ -201,13 +222,15 @@ void Controller::InitAudio()
 
 void Controller::ShutdownAudio()
 {
-	// TODO: seems none of these are needed.
-	//for (std::map<SoundID, SoundSource>::iterator iter = m_soundSources.begin(); iter != m_soundSources.end(); ++iter)
-	//{
-	//	iter->second->releaseResources();
-	//}
-	//m_audioMixer.releaseResources();
-	//m_audioMixer.removeAllInputs();
+	// -- TODO: are these really needed?
+	for (std::map<SoundID, SoundSource>::iterator iter = m_soundSources.begin(); iter != m_soundSources.end(); ++iter)
+	{
+		iter->second->releaseResources();
+	}
+	m_audioMixer.releaseResources();
+	m_audioMixer.removeAllInputs();
+	// --
+
 
 	// Exception in CriticalSection::enter() without this.
 	m_audioPlayer.setSource(nullptr);
