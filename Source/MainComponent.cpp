@@ -106,76 +106,85 @@ void MainComponent::timerCallback()
 {
 	const juce::ScopedLock lock(m_lock);
 
-	// When it reaches 0, clicks are enabled again.
-	if (m_blockInteraction > 0)
-		m_blockInteraction--;
+	Controller::GameState state(Controller::GetInstance()->GetState());
 
-	// Countdown to start pumping ooze.
-	if (m_countDown > 0)
+	if (state == Controller::STATE_RUNNING)
 	{
-		// If fast-forward button is currently toggled on, decrease countdown faster.
-		if (m_fastForward)
-			m_countDown -= 5;
-		else
-			m_countDown -= 1;
-	}
+		// When it reaches 0, clicks are enabled again.
+		if (m_blockInteraction > 0)
+			m_blockInteraction--;
 
-	else
-	{
-		// Pump more ooze into the board!
-		bool ok = m_board->Pump(GetCurrentOozePerPump());
-
-		// TODO remove param
-		Controller::GetInstance()->Pump(m_board->GetScoreValue());
-
-		// Ooze spill! This round is over, show scoreboard.
-		if (!ok)
+		// Countdown to start pumping ooze.
+		if (m_countDown > 0)
 		{
-			// Stop refreshing GUI.
-			stopTimer();
+			// If fast-forward button is currently toggled on, decrease countdown faster.
+			if (m_fastForward)
+				m_countDown -= 5;
+			else
+				m_countDown -= 1;
+		}
 
-			ScoreWindow::ScoreDetails details;
-			details.score = m_board->GetScoreValue();
+		else
+		{
+			// Pump more ooze into the board!
+			bool ok = m_board->Pump(GetCurrentOozePerPump());
 
-			// Carryover is the score gained from all previous levels.
-			details.carryover = m_cumulativeScore;
+			// TODO remove param
+			Controller::GetInstance()->Pump(m_board->GetScoreValue());
 
-			// Add level-based bonus. This mechanic helps ensure that players
-			// who make it further into the game end up with higher score than 
-			// players who just manage a very long pipe on level 1.
-			details.bonus = 0;
-			if (m_difficultyLevel > 1)
-				details.bonus = m_difficultyLevel * m_difficultyLevel * 15;
-
-			// Add score gained to the cumulative score.
-			details.total = details.score + details.bonus + details.carryover;
-			m_cumulativeScore = details.total;
-
-			// If score is high enough, score window offers 
-			// a button to continue to next level.
-			details.level = m_difficultyLevel;
-			details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
-
-			// Sound effect to trigger, depends on whether the player advanced to next level.
-			Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
-
-			juce::Point<int> windowOrigin(0, 0);
-			if (details.advance)
+			// Ooze spill! This round is over, show scoreboard.
+			if (!ok)
 			{
-				// Position the small AdvanceWindow in the middle of the window.
-				windowOrigin = juce::Point<int>(320, 170);
+				// TODO refactoring
+				//Controller::GetInstance()->SetState(Controller::STATE_ROUND_OVER);
+				//startTimer(15000);
 
-				soundID = Controller::SOUND_LEVEL_UP;
+				// Stop refreshing GUI.
+				stopTimer();
+
+				ScoreWindow::ScoreDetails details;
+				details.score = m_board->GetScoreValue();
+
+				// Carryover is the score gained from all previous levels.
+				details.carryover = m_cumulativeScore;
+
+				// Add level-based bonus. This mechanic helps ensure that players
+				// who make it further into the game end up with higher score than 
+				// players who just manage a very long pipe on level 1.
+				details.bonus = 0;
+				if (m_difficultyLevel > 1)
+					details.bonus = m_difficultyLevel * m_difficultyLevel * 15;
+
+				// Add score gained to the cumulative score.
+				details.total = details.score + details.bonus + details.carryover;
+				m_cumulativeScore = details.total;
+
+				// If score is high enough, score window offers 
+				// a button to continue to next level.
+				details.level = m_difficultyLevel;
+				details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
+
+				// Sound effect to trigger, depends on whether the player advanced to next level.
+				Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
+
+				juce::Point<int> windowOrigin(0, 0);
+				if (details.advance)
+				{
+					// Position the small AdvanceWindow in the middle of the window.
+					windowOrigin = juce::Point<int>(320, 170);
+
+					soundID = Controller::SOUND_LEVEL_UP;
+				}
+
+				// Trigger sound effect.
+				Controller::GetInstance()->QueueSound(soundID);
+
+				// Show scoreboard overlay.
+				m_scoreWindow = ScoreWindow::CreateScoreWindow(details);
+				m_scoreWindow->addChangeListener(this);
+				addAndMakeVisible(m_scoreWindow);
+				m_scoreWindow->setTopLeftPosition(windowOrigin);
 			}
-
-			// Trigger sound effect.
-			Controller::GetInstance()->QueueSound(soundID);
-
-			// Show scoreboard overlay.
-			m_scoreWindow = ScoreWindow::CreateScoreWindow(details);
-			m_scoreWindow->addChangeListener(this);
-			addAndMakeVisible(m_scoreWindow);
-			m_scoreWindow->setTopLeftPosition(windowOrigin);
 		}
 	}
 
@@ -434,8 +443,10 @@ void MainComponent::paint(juce::Graphics& g)
 		if (i == 0)
 		{
 			// Extra frame for the tile at the start of the queue.
-			g.setColour(juce::Colours::grey);
+			g.setColour(juce::Colours::limegreen);
 			g.drawRect(queueHStartPos - 4, queueVStartPos - 4, TILESIZE + 8, TILESIZE + 8, 2);
+			g.setColour(juce::Colours::black);
+			g.drawRect(queueHStartPos - 6, queueVStartPos - 6, TILESIZE + 12, TILESIZE + 12, 2);
 		}
 	}
 
