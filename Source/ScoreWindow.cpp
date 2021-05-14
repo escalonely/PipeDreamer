@@ -186,6 +186,16 @@ HighScoreWindow::HighScoreWindow(ScoreDetails details)
 	}
 }
 
+HighScoreWindow::~HighScoreWindow()
+{
+	// If player entered their name, but never pressed 
+	// the enter key, save their score anyway.
+	if (m_nameEditor && !m_nameEditor.get()->getText().isEmpty())
+	{
+		ExitTextEditor(*m_nameEditor.get());
+	}
+}
+
 void HighScoreWindow::RefreshCachedScore(std::vector<scoreEntry>& scoreHash)
 {
 	m_nameCache.clear();

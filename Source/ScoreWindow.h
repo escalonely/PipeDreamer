@@ -70,8 +70,14 @@ public:
 
 	Controller::Command GetCommand() const;
 
+	/**
+	 * Overriden method of juce::Component.
+	 */
 	void paint(juce::Graphics&) override;
 
+	/**
+	 * Overriden method of juce::Component.
+	 */
 	void mouseDown(const juce::MouseEvent& event) override;
 
 protected:
@@ -124,6 +130,14 @@ class HighScoreWindow :	public ScoreWindow,
 	friend class ScoreWindow;
 
 public:
+	/**
+	 * Class destructor.
+	 */
+	~HighScoreWindow() override;
+
+	/**
+	 * Overriden method of juce::Component.
+	 */
 	void paint(juce::Graphics&) override;
 
 	/**
