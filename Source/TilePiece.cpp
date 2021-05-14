@@ -226,6 +226,8 @@ Pipe::Direction Pipe::GetOppositeDirection(Pipe::Direction dir)
 			return DIR_W;
 		case DIR_W:
 			return DIR_E;
+		default:
+			break;
 	}
 
 	return DIR_NONE;
