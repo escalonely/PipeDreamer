@@ -6,6 +6,13 @@
               companyCopyright="Copyright (C) 2021 Bernardo Escalona.">
   <MAINGROUP id="O96DaU" name="PipeDreamer">
     <GROUP id="{1A4CAF5C-0699-6477-A37E-6EF857E1FAF0}" name="Resources">
+      <GROUP id="{3F60B67D-FDB1-A07F-58D8-609C3FA64FF5}" name="Sounds">
+        <FILE id="sYt1wj" name="explode.wav" compile="0" resource="1" file="Resources/Sounds/explode.wav"/>
+        <FILE id="ag045I" name="lose.wav" compile="0" resource="1" file="Resources/Sounds/lose.wav"/>
+        <FILE id="hHQ7Zn" name="notify.wav" compile="0" resource="1" file="Resources/Sounds/notify.wav"/>
+        <FILE id="ydQdtD" name="tap.wav" compile="0" resource="1" file="Resources/Sounds/tap.wav"/>
+        <FILE id="AoCk9R" name="win.wav" compile="0" resource="1" file="Resources/Sounds/win.wav"/>
+      </GROUP>
       <GROUP id="{D5F0BDD3-D034-3261-799C-6A4EBE8B6715}" name="Images">
         <FILE id="vbJf20" name="PipeDreamer.png" compile="0" resource="1" file="Resources/Images/PipeDreamer.png"/>
         <FILE id="yTBRE0" name="PipeDreamer.xcf" compile="0" resource="0" file="Resources/Images/PipeDreamer.xcf"/>
