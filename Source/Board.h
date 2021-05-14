@@ -58,8 +58,18 @@ public:
 	 */
 	Board(int numCols, int numRows);
 
+	/**
+	 * Class destructor. Deletes all entries in m_tileMap.
+	 */
 	virtual ~Board();
 
+	/**
+	 * Get the type of the tile at the given coordinates.
+	 * 
+	 * @param col	Column of desired tile.
+	 * @param row	Row of desired tile.
+	 * @return The type of the desired tile. Can be TYPE_NONE if the tile is empty.
+	 */
 	TilePiece::Type GetTileType(int col, int row) const;
 
 	TilePiece* GetTile(int col, int row) const;
@@ -70,8 +80,22 @@ public:
 
 	int GetNumCols() const;
 
+	/**
+	 * Pump ooze into the pipes on the board. This method is called at every tick.
+	 * Whichever pipe is m_oozingTile currently, will have its Pump() method called,
+	 * and thus the amount of ooze inside it increased.
+	 * 
+	 * @param amount	Amount of ooze to insert. The higher the level, 
+	 *					the more ooze amount will be pumped every tick.
+	 * @return	True if the ooze is still contained within m_oozingTile or it's neighbor.
+	 *			False if the ooze has now spilled.
+	 */
 	bool Pump(float amount);
 
+	/**
+	 * Resets score, bombs, clears all tiles, and repositions starting tile
+	 * to a random position.
+	 */
 	void Reset();
 
 	void CreateRandomStart();
