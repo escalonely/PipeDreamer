@@ -124,9 +124,14 @@ void MainComponent::timerCallback()
 	{
 		// Pump more ooze into the board!
 		bool ok = m_board->Pump(GetCurrentOozePerPump());
+
+		// TODO remove param
+		Controller::GetInstance()->Pump(m_board->GetScoreValue());
+
+		// Ooze spill! This round is over, show scoreboard.
 		if (!ok)
 		{
-			// Ooze spill! This round if over, show scoreboard.
+			// Stop refreshing GUI.
 			stopTimer();
 
 			ScoreWindow::ScoreDetails details;
@@ -160,7 +165,7 @@ void MainComponent::timerCallback()
 				// Position the small AdvanceWindow in the middle of the window.
 				windowOrigin = juce::Point<int>(320, 170);
 
-				soundID = Controller::SOUND_NOTIFY; // TODO: change to SOUND_LEVEL_UP
+				soundID = Controller::SOUND_LEVEL_UP;
 			}
 
 			// Trigger sound effect.
@@ -201,9 +206,6 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 						TILESIZE, TILESIZE);
 					if (tileRect.contains(clickPos))
 					{
-						// TODO explain
-						static constexpr int framesInteractionBlocked = 5;
-
 						// Default sound effect for placing pipes on the grid.
 						Controller::SoundID soundID(Controller::SOUND_CLICK);
 
@@ -237,6 +239,7 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 							m_board->ReplaceTile(i, j, newType);
 
 							// To prevent accidental double-clicking disable actions for a few frames.
+							static constexpr int framesInteractionBlocked = 5;
 							m_blockInteraction += framesInteractionBlocked;
 						}
 					}
@@ -256,38 +259,44 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 	{
 		switch (m_scoreWindow->GetCommand())
 		{
-			case ScoreWindow::CMD_RESTART:
-			case ScoreWindow::CMD_CONTINUE:
-			{
-				m_board->Reset();
-				m_queue->Reset();
-				m_blockInteraction = 0;
-				m_fastForward = false;
-
-				// If re restart at lvl 1, clear total score
-				if (m_scoreWindow->GetCommand() == ScoreWindow::CMD_RESTART)
+			case Controller::CMD_RESTART:
+			case Controller::CMD_CONTINUE:
 				{
-					m_difficultyLevel = 1;
-					m_cumulativeScore = 0;
+					Controller::GetInstance()->Reset(m_scoreWindow->GetCommand());
+
+					// TODO move below to Controller
+					m_board->Reset();
+					m_queue->Reset();
+					m_blockInteraction = 0;
+					m_fastForward = false;
+
+					// If re restart at lvl 1, clear total score
+					if (m_scoreWindow->GetCommand() == Controller::CMD_RESTART)
+					{
+						m_difficultyLevel = 1;
+						m_cumulativeScore = 0;
+					}
+
+					// Or advance to the next level
+					else
+						m_difficultyLevel += 1;
+
+					// Countdown to ooze pumping.
+					m_countDown = GetCurrentCountdown();
+
+					// Restart GUI
+					startTimer(GUI_REFRESH_RATE);
 				}
+				break;
 
-				// Or advance to the next level
-				else
-					m_difficultyLevel += 1;
-
-				// Countdown to ooze pumping.
-				m_countDown = GetCurrentCountdown();
-
-				// Restart GUI
-				startTimer(GUI_REFRESH_RATE);
-			}
-			break;
-
-			case ScoreWindow::CMD_QUIT:
-			{
-				juce::JUCEApplicationBase::quit();
-			}
-			break;
+			case Controller::CMD_QUIT:
+				{
+					juce::JUCEApplicationBase::quit();
+				}
+				break;
+				
+			default:
+				break;
 		}
 
 		delete m_scoreWindow;
