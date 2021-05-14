@@ -72,6 +72,11 @@ Controller* Controller::GetInstance()
 	return m_singleton;
 }
 
+Controller::GameState Controller::GetState() const
+{
+	return m_state;
+}
+
 void Controller::InitApplicationProperties()
 {
 	// Locate or create the appropriate properties file.

@@ -46,6 +46,13 @@ typedef std::pair<juce::String, int> scoreEntry;
 class Controller
 {
 public:
+	enum GameState
+	{
+		STATE_RUNNING = 0,
+		STATE_ROUND_OVER,
+		STATE_SCORE
+	};
+
 	/**
 	 * Represents exit state from the score window.
 	 */
@@ -87,6 +94,19 @@ public:
 	 * @return The Controller singleton object.
 	 */
 	static Controller* GetInstance();
+
+	/**
+	 * Get the current state of the game's state machine.
+	 */
+	GameState GetState() const;
+
+	/**
+	 * TODO remove this method?
+	 */
+	void SetState(GameState state)
+	{
+		m_state = state;
+	}
 
 	 /**
 	  * Gets a list of score entries (date/name and score pairs) extracted from the app properties file.
@@ -133,7 +153,7 @@ public:
 	 */
 	void QueueSound(SoundID soundID);
 
-private:
+protected:
 	/**
 	 * Class dedicated to playing sound effects on a dedicated thread.
 	 */
@@ -192,10 +212,16 @@ private:
 	 */
 	void PlaySound(SoundID soundID);
 
+private:
 	/**
 	 * The one and only instance of Controller.
 	 */
 	static Controller*	m_singleton;
+
+	/**
+	 * Current game state.
+	 */
+	GameState m_state = STATE_RUNNING;
 
 	/**
 	 * App properties file used to store player scores.
@@ -236,6 +262,7 @@ private:
 	 * TODO
 	 */
 	bool m_enoughScoreToLevelUp = false;
+
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Controller)
 };
