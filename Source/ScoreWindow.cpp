@@ -43,7 +43,7 @@ const int HighScoreWindow::MAX_SCORE_ROWS(12);
 
 ScoreWindow::ScoreWindow(ScoreDetails details)
 	:	m_details(details),
-		m_command(CMD_NONE)
+		m_command(Controller::CMD_NONE)
 {
 
 }
@@ -65,7 +65,7 @@ ScoreWindow* ScoreWindow::CreateScoreWindow(ScoreDetails details)
 	return ret;
 }
 
-ScoreWindow::Command ScoreWindow::GetCommand() const
+Controller::Command ScoreWindow::GetCommand() const
 {
 	return m_command;
 }
@@ -123,16 +123,16 @@ void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 	if (m_okButtonRect.contains(clickPos))
 	{
 		if (m_details.advance)
-			m_command = CMD_CONTINUE;
+			m_command = Controller::CMD_CONTINUE;
 		else
-			m_command = CMD_RESTART;
+			m_command = Controller::CMD_RESTART;
 	}
 
 	else if (m_quitButtonRect.contains(clickPos))
-		m_command = CMD_QUIT;
+		m_command = Controller::CMD_QUIT;
 
 	// If a button was clicked, send a callback.
-	if (m_command != CMD_NONE)
+	if (m_command != Controller::CMD_NONE)
 		sendChangeMessage();
 }
 

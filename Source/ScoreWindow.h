@@ -62,21 +62,13 @@ public:
 	};
 
 	/**
-	 * Represents exit state from the score window.
+	 * Class destructor.
 	 */
-	enum Command
-	{
-		CMD_NONE = 0,
-		CMD_QUIT,
-		CMD_RESTART,
-		CMD_CONTINUE
-	};
-
 	~ScoreWindow() override;
 
 	static ScoreWindow* CreateScoreWindow(ScoreDetails details);
 
-	Command GetCommand() const;
+	Controller::Command GetCommand() const;
 
 	void paint(juce::Graphics&) override;
 
@@ -90,7 +82,7 @@ protected:
 
 	ScoreDetails m_details;
 
-	Command m_command;
+	Controller::Command m_command;
 
 	juce::Rectangle<int> m_messageBoxRect;
 
