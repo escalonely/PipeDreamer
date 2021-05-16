@@ -86,7 +86,7 @@ public:
 
 		// Store pointers to the MainWindow and Controller so we can delete them on shutdown.
 		m_mainWindow.reset(new MainWindow(getApplicationName()));
-		m_controller.reset(Controller::GetInstance());
+		m_controller = Controller::GetInstance();
 	}
 
 	/**
@@ -97,7 +97,7 @@ public:
 	{
 		// This deletes the unique_ptr.
 		m_mainWindow = nullptr;
-		m_controller = nullptr;
+		delete m_controller;
 	}
 
 	/**
@@ -160,7 +160,7 @@ private:
 	/**
 	 * Pointer to Controller singleton.
 	 */
-	std::unique_ptr<Controller> m_controller;
+	Controller* m_controller;
 };
 
 /**
