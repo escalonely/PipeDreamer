@@ -41,7 +41,7 @@ const int HighScoreWindow::MAX_SCORE_ROWS(12);
 
 // --- ScoreWindow ---
 
-ScoreWindow::ScoreWindow(ScoreDetails details)
+ScoreWindow::ScoreWindow(Controller::ScoreDetails details)
 	:	m_details(details),
 		m_command(Controller::CMD_NONE)
 {
@@ -53,7 +53,7 @@ ScoreWindow::~ScoreWindow()
 
 }
 
-ScoreWindow* ScoreWindow::CreateScoreWindow(ScoreDetails details)
+ScoreWindow* ScoreWindow::CreateScoreWindow(Controller::ScoreDetails details)
 {
 	ScoreWindow* ret(nullptr);
 
@@ -139,7 +139,7 @@ void ScoreWindow::mouseDown(const juce::MouseEvent& event)
 
 // --- AdvanceWindow ---
 
-AdvanceWindow::AdvanceWindow(ScoreDetails details)
+AdvanceWindow::AdvanceWindow(Controller::ScoreDetails details)
 	: ScoreWindow(details)
 {
 	setSize(400, 320);
@@ -161,7 +161,7 @@ void AdvanceWindow::paint(juce::Graphics& g)
 
 // --- HighScoreWindow ---
 
-HighScoreWindow::HighScoreWindow(ScoreDetails details)
+HighScoreWindow::HighScoreWindow(Controller::ScoreDetails details)
 	: ScoreWindow(details)
 {
 	setSize(900, 620);

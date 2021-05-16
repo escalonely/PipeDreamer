@@ -49,24 +49,17 @@ public:
 	static const int BUTTON_HEIGHT;
 
 	/**
-	 * Struct used to pass score information to the ScoreWindow.
-	 */
-	struct ScoreDetails
-	{
-		int score;		//< Score gained in the last level.
-		int bonus;		//< Bonus score gained in the last level.
-		int carryover;	//< Cumulative score carried over from previous levels.
-		int total;		//< Sum of the cumulative, bonus, and last level scores.
-		int level;		//< Last difficulty level achieved.
-		bool advance;	//< True if score is high enough to advance to next level.
-	};
-
-	/**
 	 * Class destructor.
 	 */
 	~ScoreWindow() override;
 
-	static ScoreWindow* CreateScoreWindow(ScoreDetails details);
+	/**
+	 * Create an AdvanceWindow or a HighScoreWindow depending on the ScoreDetails.
+	 * 
+	 * @param details	The ScoreDetails which will be displayed on the component.
+	 * @return	Pointer to a new AdvanceWindow or a HighScoreWindow depending on the ScoreDetails.
+	 */
+	static ScoreWindow* CreateScoreWindow(Controller::ScoreDetails details);
 
 	Controller::Command GetCommand() const;
 
@@ -84,9 +77,9 @@ protected:
 	/**
 	 * Class constructor.
 	 */
-	ScoreWindow(ScoreDetails details);
+	ScoreWindow(Controller::ScoreDetails details);
 
-	ScoreDetails m_details;
+	Controller::ScoreDetails m_details;
 
 	Controller::Command m_command;
 
@@ -114,7 +107,7 @@ protected:
 	/**
 	 * Class constructor.
 	 */
-	AdvanceWindow(ScoreDetails details);
+	AdvanceWindow(Controller::ScoreDetails details);
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AdvanceWindow)
 };
@@ -186,7 +179,7 @@ protected:
 	/**
 	 * Class constructor.
 	 */
-	HighScoreWindow(ScoreDetails details);
+	HighScoreWindow(Controller::ScoreDetails details);
 
 	/**
 	 * Field for entering player name. Gets created only if the score gained is high enough.
