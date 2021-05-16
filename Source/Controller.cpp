@@ -29,11 +29,14 @@ SOFTWARE.
 
 
 #include "Controller.h"
+#include "Board.h"
+#include "Queue.h"
+#include "Randomizer.h"
 
 
 // ---- Helper types and constants ----
 
-const int MIN_SCORE_TO_ADVANCE(200); // TODO: make public const member of Controller
+const int Controller::MIN_SCORE_TO_ADVANCE(200);
 
 
 /**
@@ -49,6 +52,17 @@ Controller::Controller()
 	jassert(m_singleton == nullptr);
 	m_singleton = this;
 
+	// Create board
+	m_board.reset(new Board(10, 7));
+
+	// Create queue
+	m_queue.reset(new Queue(5));
+
+	// Initialize randomizer and store pointer
+	// to ensure it is deleted on shutdown.
+	m_randomizer = Randomizer::GetInstance();
+
+
 	// Initialize max score 
 	InitApplicationProperties();
 
@@ -59,6 +73,8 @@ Controller::Controller()
 Controller::~Controller()
 {
 	ShutdownAudio();
+
+	delete m_randomizer;
 
 	m_singleton = nullptr;
 }
@@ -75,6 +91,16 @@ Controller* Controller::GetInstance()
 Controller::GameState Controller::GetState() const
 {
 	return m_state;
+}
+
+Board* Controller::GetBoard() const
+{
+	return m_board.get();
+}
+
+Queue* Controller::GetQueue() const
+{
+	return m_queue.get();
 }
 
 void Controller::InitApplicationProperties()
@@ -145,26 +171,147 @@ bool Controller::HigherScoreThan(std::pair<juce::String, int> const &a, std::pai
 	return a.second > b.second;
 }
 
-void Controller::Pump(int score)
+bool Controller::Pump()
 {
-	if (!m_enoughScoreToLevelUp)
+	int oldScore = m_board->GetScoreValue();
+
+	// Pump more ooze into the board!
+	bool contained = m_board->Pump(GetCurrentOozePerPump());
+
+	if (contained)
 	{
-		if (score >= MIN_SCORE_TO_ADVANCE)
+		if ((oldScore < MIN_SCORE_TO_ADVANCE) &&
+			(m_board->GetScoreValue() >= MIN_SCORE_TO_ADVANCE))
 		{
 			// The player just gained enough points 
 			// to advance to the next level. Notify with a sound.
 			QueueSound(SOUND_NOTIFY);
-			m_enoughScoreToLevelUp = true;
 		}
 	}
+	
+	// Ooze spill! 
+	else
+	{
+		// TODO: something to do?
+	}
+
+	return contained;
+}
+
+Controller::ScoreDetails Controller::GetScoreDetails() const
+{
+	ScoreDetails details;
+	details.score = m_board->GetScoreValue();
+
+	// Carryover is the score gained from all previous levels.
+	details.carryover = m_cumulativeScore;
+
+	// Add level-based bonus. This mechanic helps ensure that players
+	// who make it further into the game end up with higher score than 
+	// players who just manage a very long pipe on level 1.
+	details.bonus = 0;
+	if (m_difficultyLevel > 1)
+		details.bonus = m_difficultyLevel * m_difficultyLevel * 15;
+
+	// Add score gained to the cumulative score.
+	details.total = details.score + details.bonus + details.carryover;
+	//m_cumulativeScore = details.total; // TODO!
+
+	// If score is high enough, score window offers 
+	// a button to continue to next level.
+	details.level = m_difficultyLevel;
+	details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
+
+	return details;
+}
+
+int Controller::GetDifficultyLevel() const
+{
+	return m_difficultyLevel;
 }
 
 void Controller::Reset(Controller::Command cmd)
 {
-	// TODO: refactoring 
-	(void)cmd;
+	m_board->Reset();
+	m_queue->Reset();
+	m_fastForward = false;
 
-	m_enoughScoreToLevelUp = false;
+	// If re restart at lvl 1, clear total score
+	if (cmd == Controller::CMD_RESTART)
+	{
+		m_difficultyLevel = 1;
+		m_cumulativeScore = 0;
+	}
+
+	// Or advance to the next level
+	else
+		m_difficultyLevel += 1;
+}
+
+float Controller::GetCurrentOozePerPump() const
+{
+	static const float oozePerLevel[] = {
+		1.0F, // Level 1
+		1.2F, // Level 2
+		1.4F, // Level 3
+		1.5F, // Level 4
+		1.6F, // Level 5
+		1.8F, // Level 6
+		2.0F, // Level 7
+		2.2F, // Level 8
+		2.5F, // Level 9
+		3.0F, // Level 10
+		3.5F, // Level 11
+		5.0F  // Level 12
+	};
+
+	// m_difficultyLevel starts at 1
+	int arraySize = sizeof(oozePerLevel) / sizeof(*oozePerLevel);
+	int level = m_difficultyLevel - 1;
+	if (level >= arraySize)
+		level = arraySize - 1;
+
+	// If fast-forward button is currently toggled on, increase ooze per pump.
+	if (m_fastForward)
+		return oozePerLevel[level] * 10.0f;
+
+	return oozePerLevel[level];
+}
+
+int Controller::GetCurrentCountdown() const
+{
+	static const int countdownPerLevel[] = {
+		320,	// Level 1
+		290,	// Level 2
+		260,	// Level 3
+		230,	// Level 4
+		200,	// Level 5
+		180,	// Level 6
+		160,	// Level 7
+		140,	// Level 8
+		120,	// Level 9
+		100,	// Level 10
+		80,		// Level 11
+		60		// Level 12
+	};
+
+	// m_difficultyLevel starts at 1
+	int arraySize = sizeof(countdownPerLevel) / sizeof(*countdownPerLevel);
+	int level = m_difficultyLevel - 1;
+	if (level >= arraySize)
+		level = arraySize - 1;
+
+	return countdownPerLevel[level];
+}
+
+bool Controller::GetFastForward() const
+{
+	return m_fastForward;
+}
+
+void Controller::SetFastForward(bool fastForward)
+{
+	m_fastForward = fastForward;
 }
 
 void Controller::InitAudio()

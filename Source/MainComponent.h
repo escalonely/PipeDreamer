@@ -33,12 +33,9 @@ SOFTWARE.
 #include <JuceHeader.h>
 
 
-// ---- Helper types and constants ----
+// ---- Forward declarations ----
 
-class Board;
-class Queue;
 class TilePiece;
-class Randomizer;
 class ScoreWindow;
 
 
@@ -78,11 +75,6 @@ public:
 	static const int GUI_REFRESH_RATE;
 
 	/**
-	 * Points gained in one round, necessary to advance to the next difficulty level.
-	 */
-	static const int MIN_SCORE_TO_ADVANCE;
-
-	/**
 	 * Class constructor.
 	 */
     MainComponent();
@@ -107,9 +99,6 @@ public:
 	 * @return	The colour to be used for drawing Pipes at the given level.
 	 */
 	static juce::Colour GetTileColourForLevel(int difficultyLevel);
-
-	float GetCurrentOozePerPump() const;
-	int GetCurrentCountdown() const;
 
 	/**
 	 * Draw current level number and score.
@@ -186,22 +175,9 @@ public:
 
 
 private:
-	Board* m_board;
-
-	Queue* m_queue;
-
 	ScoreWindow* m_scoreWindow;
 
-	Randomizer* m_randomizer;
-
 	int m_countDown;
-
-	/**
-	 * Level starts at 1, and as it increases, the amount of ooze pumped per frame also increases.
-	 */
-	int m_difficultyLevel;
-
-	int m_cumulativeScore;
 
 	int m_blockInteraction;
 
@@ -211,11 +187,6 @@ private:
 	 * Hyperlink to the download URL.
 	 */
 	std::unique_ptr<juce::HyperlinkButton> m_hyperlink;
-
-	/**
-	 * Fast forward state. When true, ooze flows much more rapidly. Default is false.
-	 */
-	bool m_fastForward;
 
 	/**
 	 * Rectangle containing the fast-forward button.

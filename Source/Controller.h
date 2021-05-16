@@ -33,6 +33,13 @@ SOFTWARE.
 #include <JuceHeader.h>
 
 
+// ---- Forware declarations ----
+
+class Board;
+class Queue;
+class Randomizer;
+
+
 // ---- Helper types and constants ----
 
 typedef std::pair<juce::String, int> scoreEntry;
@@ -46,6 +53,9 @@ typedef std::pair<juce::String, int> scoreEntry;
 class Controller
 {
 public:
+	/**
+	 * Game state machine states.
+	 */
 	enum GameState
 	{
 		STATE_RUNNING = 0,
@@ -79,9 +89,22 @@ public:
 	};
 
 	/**
-	 * Class constructor.
+	 * Struct used to pass score information to the ScoreWindow.
 	 */
-	Controller();
+	struct ScoreDetails
+	{
+		int score;		//< Score gained in the last level.
+		int bonus;		//< Bonus score gained in the last level.
+		int carryover;	//< Cumulative score carried over from previous levels.
+		int total;		//< Sum of the cumulative, bonus, and last level scores.
+		int level;		//< Last difficulty level achieved.
+		bool advance;	//< True if score is high enough to advance to next level.
+	};
+
+	/**
+	 * Points gained in one round, necessary to advance to the next difficulty level.
+	 */
+	static const int MIN_SCORE_TO_ADVANCE;
 
 	/**
 	 * Class destructor.
@@ -108,14 +131,24 @@ public:
 		m_state = state;
 	}
 
-	 /**
-	  * Gets a list of score entries (date/name and score pairs) extracted from the app properties file.
-	  * If not zero, the tempEntry will be inserted at the right position within the returned list. 
-	  * It will not be written to the app properties file, however.
-	  * 
-	  * @param tempEntry	Placeholder entry. If non-zero, will be present within the returned list.
-	  * @return	List of all score entries, sorted in descending order by score. 
-	  */
+	/**
+	 * Get a pointer to the Board.
+	 */
+	Board* GetBoard() const;
+
+	/**
+	 * Get a pointer to the Queue.
+	 */
+	Queue* GetQueue() const;
+
+	/**
+	 * Gets a list of score entries (date/name and score pairs) extracted from the app properties file.
+	 * If not zero, the tempEntry will be inserted at the right position within the returned list. 
+	 * It will not be written to the app properties file, however.
+	 *  
+	 * @param tempEntry	Placeholder entry. If non-zero, will be present within the returned list.
+	 * @return	List of all score entries, sorted in descending order by score. 
+	 */
 	std::vector<scoreEntry> GetAugmentedScoreHash(const scoreEntry& tempEntry) const;
 
 	/**
@@ -135,16 +168,51 @@ public:
 	static bool HigherScoreThan(std::pair<juce::String, int> const &a, std::pair<juce::String, int> const &b);
 
 	/**
-	 * Called by MainComponent at every framerate tick.
-	 * TODO remove param score
+	 * Pump more Ooze into the Board. Called by MainComponent at every framerate tick.
+	 * 
+	 * @return	True if the ooze is still contained within the pipeline.
+	 *			False if the ooze has now spilled.
 	 */
-	void Pump(int score);
+	bool Pump();
+
+	/**
+	 * Get the current score data, including points gained this round, cumulative points, 
+	 * level achieved so far, and whether the player can advance to the next level.
+	 *
+	 * @return	A filled ScoreDetails struct.
+	 */
+	ScoreDetails GetScoreDetails() const;
+
+	/**
+	 * Get the current level.
+	 *
+	 * @return	The current difficulty level, starting with 1.
+	 */
+	int GetDifficultyLevel() const;
 
 	/**
 	 * Called by MainComponent at the end of every round, when leaving the ScoreWindow.
 	 * TODO 
 	 */
 	void Reset(Command cmd);
+
+	/**
+	 * Get the time, in number of ticks, that it takes for Ooze to start pumping out
+	 * of the Source tile at the start of the round, at the current difficulty level.
+	 */
+	int GetCurrentCountdown() const;
+
+	/**
+	 * Get the fast-forward flag.
+	 * @return	True if the fast-forward mode is active.
+	 */
+	bool GetFastForward() const;
+
+	/**
+	 * Set the fast-forward flag.
+	 * @param fastForward	True to activate the fast-forward mode.
+	 */
+	void SetFastForward(bool fastForward);
 
 	/**
 	 * Wakes up the AudioThread with a specific sound to be played once it is awake.
@@ -154,6 +222,11 @@ public:
 	void QueueSound(SoundID soundID);
 
 protected:
+	/**
+	 * Class constructor.
+	 */
+	Controller();
+
 	/**
 	 * Class dedicated to playing sound effects on a dedicated thread.
 	 */
@@ -195,6 +268,11 @@ protected:
 	void InitApplicationProperties();
 
 	/**
+	 * Get the amount of Ooze to be pumped per tick at the current difficulty level.
+	 */
+	float GetCurrentOozePerPump() const;
+
+	/**
 	 * Configure and initialize the game's sound engine.
 	 */
 	void InitAudio();
@@ -216,12 +294,44 @@ private:
 	/**
 	 * The one and only instance of Controller.
 	 */
-	static Controller*	m_singleton;
+	static Controller* m_singleton;
 
 	/**
 	 * Current game state.
 	 */
 	GameState m_state = STATE_RUNNING;
+
+	/**
+	 * Object which keeps track of the tiles on the game board.
+	 */
+	std::unique_ptr<Board> m_board;
+
+	/**
+	 * Object which keeps track of the tiles on the queue.
+	 */
+	std::unique_ptr<Queue> m_queue;
+
+	/**
+	 * Level starts at 1, and as it increases, the amount of ooze pumped per frame also increases.
+	 */
+	int m_difficultyLevel = 1;
+
+	/**
+	 * Object which takes care of random number generation. 
+	 * Keep a pointer to the static object so that it can be deleted cleanly on shutdown. 
+	 */
+	Randomizer* m_randomizer;
+
+	/**
+	 * Score for each individual round is kept by the Board. The cumulative score
+	 * which the player gains as they level up is added up here.
+	 */
+	int m_cumulativeScore = 0;
+
+	/**
+	 * Fast forward state. When true, ooze flows much more rapidly. Default is false.
+	 */
+	bool m_fastForward = false;
 
 	/**
 	 * App properties file used to store player scores.
@@ -257,11 +367,6 @@ private:
 	 * Map of sound sources. Keys are the soundIDs, values are AudioFormatReaderSource.
 	 */
 	std::map<SoundID, SoundSource> m_soundSources;
-
-	/**
-	 * TODO
-	 */
-	bool m_enoughScoreToLevelUp = false;
 
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Controller)
