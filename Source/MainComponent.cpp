@@ -54,8 +54,7 @@ const juce::Rectangle<int> MainComponent::m_fastForwardButtonRect(50, 550, 70, 4
 // ---- Class Implementation ----
 
 MainComponent::MainComponent()
-	:	m_blockInteraction(0),
-		m_scoreWindow(nullptr)
+	:	m_blockInteraction(0)
 {
 	// Create GUI component wich will work as a clickable hyperlink to our github.
 	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDreamer"),
@@ -76,7 +75,7 @@ MainComponent::MainComponent()
 
 MainComponent::~MainComponent()
 {
-	delete m_scoreWindow;
+
 }
 
 void MainComponent::resized()
@@ -141,9 +140,9 @@ void MainComponent::timerCallback()
 				Controller::GetInstance()->QueueSound(soundID);
 
 				// Show scoreboard overlay.
-				m_scoreWindow = ScoreWindow::CreateScoreWindow(details);
+				m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
 				m_scoreWindow->addChangeListener(this);
-				addAndMakeVisible(m_scoreWindow);
+				addAndMakeVisible(m_scoreWindow.get());
 				m_scoreWindow->setTopLeftPosition(windowOrigin);
 			}
 		}
@@ -259,7 +258,7 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 				break;
 		}
 
-		delete m_scoreWindow;
+		// This deletes the unique_ptr.
 		m_scoreWindow = nullptr;
 	}
 }

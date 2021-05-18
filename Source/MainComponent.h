@@ -84,11 +84,29 @@ public:
 	 */
 	~MainComponent() override;
 
-    void paint (juce::Graphics&) override;
-    void resized() override;
+	/**
+	 * Reimplemented from juce::Component.
+	 */
+	void paint(juce::Graphics&) override;
 
-	void timerCallback() override;
+	/**
+	 * Reimplemented from juce::Component.
+	 */
+	void resized() override;
+
+	/**
+	 * Reimplemented from juce::Component.
+	 */
 	void mouseDown(const juce::MouseEvent& event) override;
+
+	/**
+	 * Reimplemented from juce::Timer.
+	 */
+	void timerCallback() override;
+
+	/**
+	 * Reimplemented from juce::ChangeListener.
+	 */
 	void changeListenerCallback(juce::ChangeBroadcaster* source) override;
 
 	/**
@@ -175,8 +193,14 @@ public:
 
 
 private:
-	ScoreWindow* m_scoreWindow;
+	/**
+	 * Subcomponent for displaying the player's score after each round.
+	 */
+	std::unique_ptr<ScoreWindow> m_scoreWindow;
 
+	/**
+	 * Number of timerCallback ticks until Ooze starts pumping out.
+	 */
 	int m_countDown;
 
 	int m_blockInteraction;
