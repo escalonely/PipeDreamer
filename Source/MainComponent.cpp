@@ -109,43 +109,34 @@ void MainComponent::timerCallback()
 
 		else
 		{
-			// TODO remove param
 			bool contained = controller->Pump();
-
-			// Ooze spill! This round is over, show scoreboard.
 			if (!contained)
 			{
-				// TODO refactoring
-				//Controller::GetInstance()->SetState(Controller::STATE_ROUND_OVER);
-				//startTimer(15000);
-
-				// Stop refreshing GUI.
-				stopTimer();
-
-				Controller::ScoreDetails details(Controller::GetInstance()->GetScoreDetails());
-
-				// Sound effect to trigger, depends on whether the player advanced to next level.
-				Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
-
-				juce::Point<int> windowOrigin(0, 0);
-				if (details.advance)
-				{
-					// Position the small AdvanceWindow in the middle of the window.
-					windowOrigin = juce::Point<int>(320, 170);
-
-					soundID = Controller::SOUND_LEVEL_UP;
-				}
-
-				// Trigger sound effect.
-				Controller::GetInstance()->QueueSound(soundID);
-
-				// Show scoreboard overlay.
-				m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
-				m_scoreWindow->addChangeListener(this);
-				addAndMakeVisible(m_scoreWindow.get());
-				m_scoreWindow->setTopLeftPosition(windowOrigin);
+				// Ooze spill! 
+				// Give the player a moment to see where the spill took place,
+				// before covering up the board with the score window.
+				startTimer(1000);
 			}
 		}
+	}
+
+	else if (state == Controller::STATE_STOPPED)
+	{
+		// Stop refreshing GUI.
+		stopTimer();
+
+		// Position the small AdvanceWindow in the middle of the window,
+		// while the HighScoreWindow will take up the whole window.
+		Controller::ScoreDetails details(controller->GetScoreDetails());
+		juce::Point<int> windowOrigin(0, 0);
+		if (details.advance)
+			windowOrigin = juce::Point<int>(320, 170);
+
+		// Show scoreboard overlay.
+		m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
+		m_scoreWindow->addChangeListener(this);
+		addAndMakeVisible(m_scoreWindow.get());
+		m_scoreWindow->setTopLeftPosition(windowOrigin);
 	}
 
 	this->repaint();
@@ -157,7 +148,8 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 
 	Controller* controller(Controller::GetInstance());
 
-	if (m_blockInteraction == 0)
+	if ((controller->GetState() == Controller::STATE_RUNNING) &&
+		(m_blockInteraction == 0))
 	{
 		juce::Point<int> clickPos = event.getMouseDownPosition();
 

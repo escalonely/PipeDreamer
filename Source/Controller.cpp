@@ -178,6 +178,7 @@ bool Controller::Pump()
 	// Pump more ooze into the board!
 	bool contained = m_board->Pump(GetCurrentOozePerPump());
 
+	// Ooze is still contained in the pipeline.
 	if (contained)
 	{
 		if ((oldScore < MIN_SCORE_TO_ADVANCE) &&
@@ -192,7 +193,17 @@ bool Controller::Pump()
 	// Ooze spill! 
 	else
 	{
-		// TODO: something to do?
+		// Sound effect to trigger, depends on whether the player advanced to next level.
+		SoundID soundID(SOUND_GAME_OVER);
+		ScoreDetails details(GetScoreDetails());
+		if (details.advance)
+			soundID = SOUND_LEVEL_UP;
+
+		// Trigger sound effect.
+		QueueSound(soundID);
+
+		// This round is over.
+		m_state = STATE_STOPPED;
 	}
 
 	return contained;
@@ -215,7 +226,6 @@ Controller::ScoreDetails Controller::GetScoreDetails() const
 
 	// Add score gained to the cumulative score.
 	details.total = details.score + details.bonus + details.carryover;
-	//m_cumulativeScore = details.total; // TODO!
 
 	// If score is high enough, score window offers 
 	// a button to continue to next level.
@@ -232,10 +242,6 @@ int Controller::GetDifficultyLevel() const
 
 void Controller::Reset(Controller::Command cmd)
 {
-	m_board->Reset();
-	m_queue->Reset();
-	m_fastForward = false;
-
 	// If re restart at lvl 1, clear total score
 	if (cmd == Controller::CMD_RESTART)
 	{
@@ -244,8 +250,18 @@ void Controller::Reset(Controller::Command cmd)
 	}
 
 	// Or advance to the next level
-	else
+	else if (cmd == Controller::CMD_CONTINUE)
+	{
+		ScoreDetails details(GetScoreDetails());
+		m_cumulativeScore = details.total;
+
 		m_difficultyLevel += 1;
+	}
+
+	m_board->Reset();
+	m_queue->Reset();
+	m_fastForward = false;
+	m_state = STATE_RUNNING;
 }
 
 float Controller::GetCurrentOozePerPump() const
