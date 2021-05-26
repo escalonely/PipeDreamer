@@ -91,6 +91,11 @@ TilePiece* Board::GetTile(int col, int row) const
 	return m_tileMap.at(Coord(col, row));
 }
 
+TilePiece* Board::GetOozingTile() const
+{
+	return m_oozingTile;
+}
+
 void Board::ReplaceTile(int col, int row, TilePiece::Type t)
 {
 	Coord c(col, row);

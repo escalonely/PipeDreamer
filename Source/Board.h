@@ -72,6 +72,9 @@ public:
 	 */
 	TilePiece::Type GetTileType(int col, int row) const;
 
+	/**
+	 * Get the tile at the desired location.
+	 */
 	TilePiece* GetTile(int col, int row) const;
 
 	void ReplaceTile(int col, int row, TilePiece::Type t);
@@ -134,8 +137,15 @@ public:
 	 */
 	int GetPercentUntilFreeBomb();
 
+	/**
+	 * Get the pipe on the board, in which the ooze level is currently increasing.
+	 */
+	TilePiece* GetOozingTile() const;
 
 private:
+	/**
+	 * Pipe piece in which the ooze level is currently increasing.
+	 */
 	TilePiece* m_oozingTile;
 
 	int m_numCols;
