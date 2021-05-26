@@ -163,10 +163,11 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 		else
 		{
 			Board* board(controller->GetBoard());
+			bool replace(false);
 
-			for (int i = 0; i < board->GetNumCols(); i++)
+			for (int i = 0; (i < board->GetNumCols()) && !replace; i++)
 			{
-				for (int j = 0; j < board->GetNumRows(); j++)
+				for (int j = 0; (j < board->GetNumRows()) && !replace; j++)
 				{
 					juce::Rectangle<int> tileRect(	BOARD_HSTARTPOS + i * (TILESIZE - 1),
 													BOARD_VSTARTPOS + j * (TILESIZE - 1),
@@ -177,7 +178,7 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 						Controller::SoundID soundID(Controller::SOUND_CLICK);
 
 						TilePiece* clickedTile = board->GetTile(i, j);
-						bool replace(clickedTile->GetType() == TilePiece::TYPE_NONE);
+						replace = (clickedTile->GetType() == TilePiece::TYPE_NONE);
 
 						if (!replace)
 						{
