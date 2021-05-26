@@ -110,42 +110,27 @@ void MainComponent::timerCallback()
 		else
 		{
 			bool contained = controller->Pump();
-
-			// Ooze spill! This round is over, show scoreboard.
 			if (!contained)
 			{
-				// TODO refactoring
-
-				controller->SetState(Controller::STATE_ROUND_OVER);
-				startTimer(3000);
+				// Ooze spill! 
+				// Give the player a moment to see where the spill took place,
+				// before covering up the board with the score window.
+				startTimer(1000);
 			}
 		}
 	}
 
-	else if (state == Controller::STATE_ROUND_OVER)
+	else if (state == Controller::STATE_STOPPED)
 	{
 		// Stop refreshing GUI.
-		controller->SetState(Controller::STATE_SCORE);
 		stopTimer();
 
+		// Position the small AdvanceWindow in the middle of the window,
+		// while the HighScoreWindow will take up the whole window.
 		Controller::ScoreDetails details(controller->GetScoreDetails());
-
-		// TODO move sound trigger to controller
-
-		// Sound effect to trigger, depends on whether the player advanced to next level.
-		Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
-
 		juce::Point<int> windowOrigin(0, 0);
 		if (details.advance)
-		{
-			// Position the small AdvanceWindow in the middle of the window.
 			windowOrigin = juce::Point<int>(320, 170);
-
-			soundID = Controller::SOUND_LEVEL_UP;
-		}
-
-		// Trigger sound effect.
-		controller->QueueSound(soundID);
 
 		// Show scoreboard overlay.
 		m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
@@ -163,7 +148,8 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 
 	Controller* controller(Controller::GetInstance());
 
-	if (m_blockInteraction == 0)
+	if ((controller->GetState() == Controller::STATE_RUNNING) &&
+		(m_blockInteraction == 0))
 	{
 		juce::Point<int> clickPos = event.getMouseDownPosition();
 

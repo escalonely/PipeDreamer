@@ -59,8 +59,7 @@ public:
 	enum GameState
 	{
 		STATE_RUNNING = 0,
-		STATE_ROUND_OVER,
-		STATE_SCORE
+		STATE_STOPPED
 	};
 
 	/**
@@ -124,14 +123,6 @@ public:
 	GameState GetState() const;
 
 	/**
-	 * TODO remove this method?
-	 */
-	void SetState(GameState state)
-	{
-		m_state = state;
-	}
-
-	/**
 	 * Get a pointer to the Board.
 	 */
 	Board* GetBoard() const;
@@ -192,7 +183,10 @@ public:
 
 	/**
 	 * Called by MainComponent at the end of every round, when leaving the ScoreWindow.
-	 * TODO 
+	 * It clears up the Board, resets the Queue, and sets state back to STATE_RUNNING.
+	 * 
+	 * @param cmd	If CMD_RESTART, will set level back to 1 and clear all scores.
+	 *				if CMD_CONTINUE, will increase level by 1 and increase cumulative score.
 	 */
 	void Reset(Command cmd);
 

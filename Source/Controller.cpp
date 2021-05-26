@@ -178,6 +178,7 @@ bool Controller::Pump()
 	// Pump more ooze into the board!
 	bool contained = m_board->Pump(GetCurrentOozePerPump());
 
+	// Ooze is still contained in the pipeline.
 	if (contained)
 	{
 		if ((oldScore < MIN_SCORE_TO_ADVANCE) &&
@@ -192,8 +193,17 @@ bool Controller::Pump()
 	// Ooze spill! 
 	else
 	{
-		// TODO: something to do?
-		//ScoreDetails details(GetScoreDetails());
+		// Sound effect to trigger, depends on whether the player advanced to next level.
+		SoundID soundID(SOUND_GAME_OVER);
+		ScoreDetails details(GetScoreDetails());
+		if (details.advance)
+			soundID = SOUND_LEVEL_UP;
+
+		// Trigger sound effect.
+		QueueSound(soundID);
+
+		// This round is over.
+		m_state = STATE_STOPPED;
 	}
 
 	return contained;
@@ -251,8 +261,7 @@ void Controller::Reset(Controller::Command cmd)
 	m_board->Reset();
 	m_queue->Reset();
 	m_fastForward = false;
-
-	SetState(STATE_RUNNING);
+	m_state = STATE_RUNNING;
 }
 
 float Controller::GetCurrentOozePerPump() const
