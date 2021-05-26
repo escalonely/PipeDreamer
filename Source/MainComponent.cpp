@@ -109,43 +109,49 @@ void MainComponent::timerCallback()
 
 		else
 		{
-			// TODO remove param
 			bool contained = controller->Pump();
 
 			// Ooze spill! This round is over, show scoreboard.
 			if (!contained)
 			{
 				// TODO refactoring
-				//Controller::GetInstance()->SetState(Controller::STATE_ROUND_OVER);
-				//startTimer(15000);
 
-				// Stop refreshing GUI.
-				stopTimer();
-
-				Controller::ScoreDetails details(Controller::GetInstance()->GetScoreDetails());
-
-				// Sound effect to trigger, depends on whether the player advanced to next level.
-				Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
-
-				juce::Point<int> windowOrigin(0, 0);
-				if (details.advance)
-				{
-					// Position the small AdvanceWindow in the middle of the window.
-					windowOrigin = juce::Point<int>(320, 170);
-
-					soundID = Controller::SOUND_LEVEL_UP;
-				}
-
-				// Trigger sound effect.
-				Controller::GetInstance()->QueueSound(soundID);
-
-				// Show scoreboard overlay.
-				m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
-				m_scoreWindow->addChangeListener(this);
-				addAndMakeVisible(m_scoreWindow.get());
-				m_scoreWindow->setTopLeftPosition(windowOrigin);
+				controller->SetState(Controller::STATE_ROUND_OVER);
+				startTimer(3000);
 			}
 		}
+	}
+
+	else if (state == Controller::STATE_ROUND_OVER)
+	{
+		// Stop refreshing GUI.
+		controller->SetState(Controller::STATE_SCORE);
+		stopTimer();
+
+		Controller::ScoreDetails details(controller->GetScoreDetails());
+
+		// TODO move sound trigger to controller
+
+		// Sound effect to trigger, depends on whether the player advanced to next level.
+		Controller::SoundID soundID(Controller::SOUND_GAME_OVER);
+
+		juce::Point<int> windowOrigin(0, 0);
+		if (details.advance)
+		{
+			// Position the small AdvanceWindow in the middle of the window.
+			windowOrigin = juce::Point<int>(320, 170);
+
+			soundID = Controller::SOUND_LEVEL_UP;
+		}
+
+		// Trigger sound effect.
+		controller->QueueSound(soundID);
+
+		// Show scoreboard overlay.
+		m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
+		m_scoreWindow->addChangeListener(this);
+		addAndMakeVisible(m_scoreWindow.get());
+		m_scoreWindow->setTopLeftPosition(windowOrigin);
 	}
 
 	this->repaint();

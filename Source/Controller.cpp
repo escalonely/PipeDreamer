@@ -193,6 +193,7 @@ bool Controller::Pump()
 	else
 	{
 		// TODO: something to do?
+		//ScoreDetails details(GetScoreDetails());
 	}
 
 	return contained;
@@ -215,7 +216,6 @@ Controller::ScoreDetails Controller::GetScoreDetails() const
 
 	// Add score gained to the cumulative score.
 	details.total = details.score + details.bonus + details.carryover;
-	//m_cumulativeScore = details.total; // TODO!
 
 	// If score is high enough, score window offers 
 	// a button to continue to next level.
@@ -232,10 +232,6 @@ int Controller::GetDifficultyLevel() const
 
 void Controller::Reset(Controller::Command cmd)
 {
-	m_board->Reset();
-	m_queue->Reset();
-	m_fastForward = false;
-
 	// If re restart at lvl 1, clear total score
 	if (cmd == Controller::CMD_RESTART)
 	{
@@ -244,8 +240,19 @@ void Controller::Reset(Controller::Command cmd)
 	}
 
 	// Or advance to the next level
-	else
+	else if (cmd == Controller::CMD_CONTINUE)
+	{
+		ScoreDetails details(GetScoreDetails());
+		m_cumulativeScore = details.total;
+
 		m_difficultyLevel += 1;
+	}
+
+	m_board->Reset();
+	m_queue->Reset();
+	m_fastForward = false;
+
+	SetState(STATE_RUNNING);
 }
 
 float Controller::GetCurrentOozePerPump() const
