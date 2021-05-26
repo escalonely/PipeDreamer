@@ -168,6 +168,15 @@ public:
 	void DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
 
 	/**
+	 * Draw ooze spill next to the last pipe on the pipeline.
+	 *
+	 * @param origin	The point on the MainComponent window where the top-left corner
+	 *					of the tile which caused the spill.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawSpill(juce::Point<int> origin, juce::Graphics& g);
+
+	/**
 	 * Draw the "ooze meter", i.e. the vial that indicates the countdown until ooze starts pumping out.
 	 *
 	 * @param origin	The point on the MainComponent window to use as origin.

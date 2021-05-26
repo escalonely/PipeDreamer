@@ -115,7 +115,7 @@ void MainComponent::timerCallback()
 				// Ooze spill! 
 				// Give the player a moment to see where the spill took place,
 				// before covering up the board with the score window.
-				startTimer(1000);
+				startTimer(2000);
 			}
 		}
 	}
@@ -339,6 +339,9 @@ void MainComponent::paint(juce::Graphics& g)
 		}
 	}
 
+	// Position of the oozing tile. Needed for displaying spills below.
+	juce::Point<int> oozingTileOrigin;
+
 	// Draw board.
 	for (int i = 0; i < board->GetNumCols(); i++)
 	{
@@ -346,12 +349,20 @@ void MainComponent::paint(juce::Graphics& g)
 		{
 			juce::Point<int> p(BOARD_HSTARTPOS + i * (TILESIZE - 1), BOARD_VSTARTPOS + j * (TILESIZE - 1));
 
-			DrawTile(board->GetTile(i, j), p, g);
-			DrawOoze(board->GetTile(i, j), p, g);
-			DrawCrossSecondWay(board->GetTile(i, j), p, g);
-			DrawTileDecoration(board->GetTile(i, j), p, g);
+			TilePiece* tile = board->GetTile(i, j);
+
+			DrawTile(tile, p, g);
+			DrawOoze(tile, p, g);
+			DrawCrossSecondWay(tile, p, g);
+			DrawTileDecoration(tile, p, g);
+
+			if (board->GetOozingTile() == tile)
+				oozingTileOrigin = p;
 		}
 	}
+
+	// Draw ooze spillage, if any.
+	DrawSpill(oozingTileOrigin, g);
 }
 
 void MainComponent::DrawLevelAndScore(juce::Graphics& g)
@@ -1110,6 +1121,45 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 				g.setColour(juce::Colours::orangered);
 				g.fillPath(starPath);
 			}
+		}
+	}
+}
+
+void MainComponent::DrawSpill(juce::Point<int> origin, juce::Graphics& g)
+{
+	if (Controller::GetInstance()->GetState() == Controller::STATE_STOPPED)
+	{
+		Pipe* oozingPipe = dynamic_cast<Pipe*>(Controller::GetInstance()->GetBoard()->GetOozingTile());
+		if (oozingPipe != nullptr)
+		{
+			int qt(TILESIZE / 4);
+			Pipe::Direction spillDir = oozingPipe->GetFlowDirection();
+			juce::Rectangle<int> bigRec;
+			juce::Rectangle<int> smlRec;
+			switch (spillDir)
+			{
+			case Pipe::DIR_N:
+				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() - TILESIZE, TILESIZE, TILESIZE);
+				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() - HALFTILE, HALFTILE, HALFTILE);
+				break;
+			case Pipe::DIR_S:
+				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() + TILESIZE, TILESIZE, TILESIZE);
+				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() + TILESIZE, HALFTILE, HALFTILE);
+				break;
+			case Pipe::DIR_E:
+				bigRec = juce::Rectangle<int>(origin.getX() + TILESIZE, origin.getY(), TILESIZE, TILESIZE);
+				smlRec = juce::Rectangle<int>(origin.getX() + TILESIZE, origin.getY() + qt, HALFTILE, HALFTILE);
+				break;
+			case Pipe::DIR_W:
+				bigRec = juce::Rectangle<int>(origin.getX() - TILESIZE, origin.getY(), TILESIZE, TILESIZE);
+				smlRec = juce::Rectangle<int>(origin.getX() - HALFTILE, origin.getY() + qt, HALFTILE, HALFTILE);
+				break;
+			}
+
+			g.setColour(juce::Colour(0x88008000)); // transparent green
+			g.fillEllipse(bigRec.toFloat());
+			g.setColour(juce::Colours::limegreen);
+			g.fillEllipse(smlRec.toFloat());
 		}
 	}
 }
