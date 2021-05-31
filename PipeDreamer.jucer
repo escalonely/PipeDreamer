@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="Lwsp3c" name="PipeDreamer" projectType="guiapp" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" displaySplashScreen="1"
-              version="0.2" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDreamer"
+              version="0.3" companyName="Bernsoft Ltd" companyWebsite="https://github.com/escalonely/PipeDreamer"
               companyCopyright="Copyright (C) 2021 Bernardo Escalona.">
   <MAINGROUP id="O96DaU" name="PipeDreamer">
     <GROUP id="{1A4CAF5C-0699-6477-A37E-6EF857E1FAF0}" name="Resources">
