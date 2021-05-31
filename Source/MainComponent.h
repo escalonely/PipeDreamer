@@ -50,21 +50,6 @@ class MainComponent  :	public juce::Component,
 {
 public:
 	/**
-	 * Width & height of a tile piece, in pixels.
-	 */
-	static const int TILESIZE;
-
-	/**
-	 * Half-width & height of a tile piece, in pixels. 
-	 */
-	static const int HALFTILE;
-
-	/**
-	 * (Empty) pipe thickness in pixels.
-	 */
-	static const float PIPE_THICKNESS;
-
-	/**
 	 * Thickness of ooze inside pipes, in pixels.
 	 */
 	static const float OOZE_THICKNESS;
@@ -83,6 +68,11 @@ public:
 	 * Class destructor.
 	 */
 	~MainComponent() override;
+
+	/**
+	 * Get the width & height of a tile piece, in pixels.
+	 */
+	int GetTileSize() const;
 
 	/**
 	 * Reimplemented from juce::Component.
@@ -117,6 +107,21 @@ public:
 	 * @return	The colour to be used for drawing Pipes at the given level.
 	 */
 	static juce::Colour GetTileColourForLevel(int difficultyLevel);
+
+	/**
+	 * ID of the label on the GUI.
+	 */
+	enum LabelID
+	{
+		LABEL_SCORE = 0,
+		LABEL_BSCORE,
+		LABEL_VERSION
+	};
+
+	/**
+	 * Get the font to be used for the given label.
+	 */
+	juce::Font GetFont(LabelID labelID) const;
 
 	/**
 	 * Draw current level number and score.
@@ -203,6 +208,11 @@ public:
 
 private:
 	/**
+	 * Width & height of a tile piece, in pixels.
+	 */
+	int m_tileSize = 0;
+
+	/**
 	 * Subcomponent for displaying the player's score after each round.
 	 */
 	std::unique_ptr<ScoreWindow> m_scoreWindow;
@@ -224,7 +234,7 @@ private:
 	/**
 	 * Rectangle containing the fast-forward button.
 	 */
-	static const juce::Rectangle<int> m_fastForwardButtonRect;
+	juce::Rectangle<int> m_fastForwardButtonRect;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

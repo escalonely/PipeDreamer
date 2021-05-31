@@ -36,19 +36,11 @@ SOFTWARE.
 #include "ScoreWindow.h"
 
 
-static constexpr int BOARD_VSTARTPOS = 80; // TODO: class constants
-static constexpr int BOARD_HSTARTPOS = 175;
-
 
 // ---- Helper types and constants ----
 
-const int MainComponent::TILESIZE(70);
-const int MainComponent::HALFTILE(TILESIZE / 2);
-const float MainComponent::PIPE_THICKNESS(20.0f);
 const float MainComponent::OOZE_THICKNESS(15.0f);
 const int MainComponent::GUI_REFRESH_RATE(60);
-const juce::Rectangle<int> MainComponent::m_fastForwardButtonRect(50, 550, 70, 45);
-
 
 
 // ---- Class Implementation ----
@@ -59,7 +51,6 @@ MainComponent::MainComponent()
 	// Create GUI component wich will work as a clickable hyperlink to our github.
 	m_hyperlink = std::make_unique<juce::HyperlinkButton>(	juce::String("https://github.com/escalonely/PipeDreamer"),
 															juce::URL("https://github.com/escalonely/PipeDreamer"));
-	m_hyperlink->setFont(juce::Font("consolas", 18.0f, juce::Font::plain), false /* do not resize */);
 	m_hyperlink->setColour(juce::HyperlinkButton::textColourId, juce::Colours::grey);
 	addAndMakeVisible(m_hyperlink.get());
 
@@ -78,10 +69,29 @@ MainComponent::~MainComponent()
 
 }
 
+int MainComponent::GetTileSize() const
+{
+	return m_tileSize;
+}
+
 void MainComponent::resized()
 {
+	// Scale tiles according to the game window's both width and height.
+	int minDimension = std::min<int>(getLocalBounds().getWidth(), static_cast<int>(getLocalBounds().getHeight() * 1.4516f));
+	m_tileSize = static_cast<int>(minDimension / 13.0f);
+
+	m_fastForwardButtonRect = juce::Rectangle<float>(getLocalBounds().getWidth() / 18.0f, getLocalBounds().getHeight() / 1.1245f, 70.0f, 45.0f).toNearestInt();
+
 	// Position the hyperlink
-	m_hyperlink->setBounds(getLocalBounds().getWidth() - 380, getLocalBounds().getHeight() - 50, 350, 40);
+	m_hyperlink->setFont(GetFont(LABEL_VERSION), false /* do not resize */);
+	m_hyperlink->setBounds(	static_cast<int>(getLocalBounds().getWidth() / 1.8f), 
+							getLocalBounds().getHeight() - 50, 
+							static_cast<int>(getLocalBounds().getWidth() / 2.4545f), 
+							40);
+
+	// Resize the ScoreWindow, if any.
+	if (m_scoreWindow)
+		m_scoreWindow->resized();
 }
 
 void MainComponent::timerCallback()
@@ -130,13 +140,14 @@ void MainComponent::timerCallback()
 		Controller::ScoreDetails details(controller->GetScoreDetails());
 		juce::Point<int> windowOrigin(0, 0);
 		if (details.advance)
-			windowOrigin = juce::Point<int>(320, 170);
+			windowOrigin = juce::Point<int>(getLocalBounds().getWidth() / 3, getLocalBounds().getHeight() / 4);
 
 		// Show scoreboard overlay.
 		m_scoreWindow.reset(ScoreWindow::CreateScoreWindow(details));
 		m_scoreWindow->addChangeListener(this);
 		addAndMakeVisible(m_scoreWindow.get());
 		m_scoreWindow->setTopLeftPosition(windowOrigin);
+		m_scoreWindow->resized();
 	}
 
 	this->repaint();
@@ -164,14 +175,16 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 		{
 			Board* board(controller->GetBoard());
 			bool replace(false);
+			int boardHStartPos = static_cast<int>(getLocalBounds().getWidth() / 5.114f);
+			int boardVStartPos = static_cast<int>(getLocalBounds().getHeight() / 7.75f);
 
 			for (int i = 0; (i < board->GetNumCols()) && !replace; i++)
 			{
 				for (int j = 0; (j < board->GetNumRows()) && !replace; j++)
 				{
-					juce::Rectangle<int> tileRect(	BOARD_HSTARTPOS + i * (TILESIZE - 1),
-													BOARD_VSTARTPOS + j * (TILESIZE - 1),
-													TILESIZE, TILESIZE);
+					juce::Rectangle<int> tileRect(	boardHStartPos + i * (m_tileSize - 1),
+													boardVStartPos + j * (m_tileSize - 1),
+													m_tileSize, m_tileSize);
 					if (tileRect.contains(clickPos))
 					{
 						// Default sound effect for placing pipes on the grid.
@@ -282,16 +295,36 @@ juce::Colour MainComponent::GetTileColourForLevel(int difficultyLevel)
 	return colorsPerLevel[difficultyLevel];
 }
 
+juce::Font MainComponent::GetFont(LabelID labelID) const
+{
+	// Scale the font according to the game window's both width and height.
+	int minDimension = std::min<int>(static_cast<int>(getLocalBounds().getWidth() / 1.4516f), getLocalBounds().getHeight());
+	switch (labelID)
+	{
+		case LABEL_VERSION:
+			return juce::Font("consolas", (minDimension * 18.0f / 620.0f), juce::Font::plain);
+		case LABEL_SCORE:
+			return juce::Font("consolas", (minDimension * 32.0f / 620.0f), juce::Font::plain);
+		case LABEL_BSCORE:
+			return juce::Font("consolas", (minDimension * 32.0f / 620.0f), juce::Font::bold);
+	}
+
+	return juce::Font();
+}
+
 void MainComponent::paint(juce::Graphics& g)
 {
 	Board* board(Controller::GetInstance()->GetBoard());
 	Queue* queue(Controller::GetInstance()->GetQueue());
 
+	int boardHStartPos = static_cast<int>(getLocalBounds().getWidth() / 5.114f);
+	int boardVStartPos = static_cast<int>(getLocalBounds().getHeight() / 7.75f);
+
 	// Background colour
 	g.fillAll(juce::Colour(67, 67, 67));
 
 	// Draw countdown to ooze.
-	DrawOozeMeter(juce::Point<int>(74, 30), g);
+	DrawOozeMeter(juce::Point<int>(static_cast<int>(getLocalBounds().getWidth() / 12.05f), 30), g);
 
 	// Draw current level number and score
 	DrawLevelAndScore(g);
@@ -302,9 +335,9 @@ void MainComponent::paint(juce::Graphics& g)
 		juce::String versionString(JUCE_STRINGIFY(JUCE_APP_VERSION));
 		infoText << versionString;
 
-		juce::Rectangle<int> textRect(BOARD_HSTARTPOS, getLocalBounds().getHeight() - 50, 250, 40);
+		juce::Rectangle<int> textRect(boardHStartPos, getLocalBounds().getHeight() - 50, static_cast<int>(getLocalBounds().getWidth() / 5.625f), 40);
 
-		g.setFont(juce::Font("consolas", 18.0f, juce::Font::plain));
+		g.setFont(GetFont(LABEL_VERSION));
 		g.setColour(juce::Colours::grey);
 		g.drawText(infoText, textRect, juce::Justification::left, false);
 		//g.drawRect(textRect, 1);
@@ -314,18 +347,18 @@ void MainComponent::paint(juce::Graphics& g)
 	}
 
 	// Draw bombs
-	DrawBombs(juce::Point<int>(538, 20), g);
+	DrawBombs(juce::Point<int>(static_cast<int>(getLocalBounds().getWidth() / 1.6749f), 20), g);
 
 	// Draw button to accelerate game speed.
 	DrawFastForwardButton(g);
 
-	// Draw tile queue
-	static constexpr int queueVStartPos = 450;
-	static constexpr int queueHStartPos = 50;
+	// Draw tile queue: queueVStartPos is the origin ob the bottomest tile in the queue
+	int queueVStartPos = static_cast<int>(getLocalBounds().getHeight() / 1.3757f);
+	int queueHStartPos = static_cast<int>(getLocalBounds().getWidth() / 18);
 	for (int i = 0; i < queue->GetSize(); i++)
 	{
 		// Pipe shape
-		juce::Point<int> p(queueHStartPos, queueVStartPos - i * (TILESIZE - 1));
+		juce::Point<int> p(queueHStartPos, queueVStartPos - i * (m_tileSize - 1));
 		DrawTile((queue->GetTile(i)), p, g);
 		DrawCrossSecondWay((queue->GetTile(i)), p, g);
 		DrawTileDecoration((queue->GetTile(i)), p, g);
@@ -334,9 +367,9 @@ void MainComponent::paint(juce::Graphics& g)
 		{
 			// Extra frame for the tile at the start of the queue.
 			g.setColour(juce::Colours::limegreen);
-			g.drawRect(queueHStartPos - 4, queueVStartPos - 4, TILESIZE + 8, TILESIZE + 8, 2);
+			g.drawRect(queueHStartPos - 4, queueVStartPos - 4, m_tileSize + 8, m_tileSize + 8, 2);
 			g.setColour(juce::Colours::black);
-			g.drawRect(queueHStartPos - 6, queueVStartPos - 6, TILESIZE + 12, TILESIZE + 12, 2);
+			g.drawRect(queueHStartPos - 6, queueVStartPos - 6, m_tileSize + 12, m_tileSize + 12, 2);
 		}
 	}
 
@@ -348,7 +381,7 @@ void MainComponent::paint(juce::Graphics& g)
 	{
 		for (int j = 0; j < board->GetNumRows(); j++)
 		{
-			juce::Point<int> p(BOARD_HSTARTPOS + i * (TILESIZE - 1), BOARD_VSTARTPOS + j * (TILESIZE - 1));
+			juce::Point<int> p(boardHStartPos + i * (m_tileSize - 1), boardVStartPos + j * (m_tileSize - 1));
 
 			TilePiece* tile = board->GetTile(i, j);
 
@@ -371,32 +404,37 @@ void MainComponent::DrawLevelAndScore(juce::Graphics& g)
 	Controller* controller(Controller::GetInstance());
 	int playerScore = controller->GetBoard()->GetScoreValue();
 
-	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
+	g.setFont(GetFont(LABEL_SCORE));
 	g.setColour(juce::Colours::grey);
 
-	juce::Rectangle<int> textRect(BOARD_HSTARTPOS, 20, 92, HALFTILE);
+	int halfTile = m_tileSize / 2;
+	juce::Rectangle<int> textRect(	static_cast<int>(getLocalBounds().getWidth() / 5.114f), 20, 
+									static_cast<int>(getLocalBounds().getWidth() / 9.7826f), halfTile);
 	g.drawText("Level:", textRect, juce::Justification::left, false);
-	//g.drawRect(textRect, 1.0f);
+	// g.drawRect(textRect, 1.0f); // frame
 
-	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52, 20, 92, HALFTILE);
+	textRect = juce::Rectangle<int>(	static_cast<int>(getLocalBounds().getWidth() / 2.8421f), 20, 
+										static_cast<int>(getLocalBounds().getWidth() / 9.7826f), halfTile);
 	g.drawText("Score:", textRect, juce::Justification::left, false);
-	//g.drawRect(textRect, 1.0f);
+	// g.drawRect(textRect, 1.0f); // frame
 
 	// If score this round is high enough to advance to next difficulty level, highlight the number.
 	if (playerScore >= Controller::MIN_SCORE_TO_ADVANCE)
 	{
 		g.setColour(juce::Colours::yellow);
-		g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
+		g.setFont(GetFont(LABEL_BSCORE));
 	}
-	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92 + 52 + 92, 20, 160, HALFTILE);
+	textRect = juce::Rectangle<int>(static_cast<int>(getLocalBounds().getWidth() / 2.1880f), 20, 
+									static_cast<int>(getLocalBounds().getWidth() / 5.625f), halfTile);
 	g.drawText(juce::String(playerScore), textRect, juce::Justification::left, false);
-	//g.drawRect(textRect, 1.0f);
+	// g.drawRect(textRect, 1.0f); // frame
 
 	// Show difficulty level number in this level's tile color.
 	g.setColour(GetTileColourForLevel(controller->GetDifficultyLevel()));
-	textRect = juce::Rectangle<int>(BOARD_HSTARTPOS + 92, 20, 52, HALFTILE);
+	textRect = juce::Rectangle<int>(static_cast<int>(getLocalBounds().getWidth() / 3.375f), 20, 
+									static_cast<int>(getLocalBounds().getWidth() / 17.31f), halfTile);
 	g.drawText(juce::String(controller->GetDifficultyLevel()), textRect, juce::Justification::left, false);
-	//g.drawRect(textRect, 1.0f);
+	// g.drawRect(textRect, 1.0f); // frame
 }
 
 void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g)
@@ -408,144 +446,145 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 		{
 			// Draw tile's Background color
 			g.setColour(GetTileColourForLevel(Controller::GetInstance()->GetDifficultyLevel()));
-			g.fillRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE);
+			g.fillRect(origin.getX(), origin.getY(), m_tileSize, m_tileSize);
 
 			juce::Line<int> line;
-			static const float pipeHalfThickness = PIPE_THICKNESS / 2.0f;
+			float pipeThickness = m_tileSize / 3.5f;
 			g.setColour(juce::Colours::black);
 
 			// Ellipse rect used to have nice rounded corners in the elbow pipes.
-			juce::Rectangle<float> elbowJoint(	origin.getX() + HALFTILE - pipeHalfThickness,
-												origin.getY() + HALFTILE - pipeHalfThickness,
-												PIPE_THICKNESS, 
-												PIPE_THICKNESS);
+			int halfTile = m_tileSize / 2;
+			juce::Rectangle<float> elbowJoint(	origin.getX() + halfTile - (pipeThickness / 2.0f),
+												origin.getY() + halfTile - (pipeThickness / 2.0f),
+												pipeThickness, 
+												pipeThickness);
 
 			switch (pipe->GetType())
 			{
 			case TilePiece::TYPE_START_N:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(),
-											origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getX() + halfTile,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_START_S:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
-											origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_START_E:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE, 
-											origin.getY() + HALFTILE, 
-											origin.getX() + TILESIZE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_START_W:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
 											origin.getX(), 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_VERTICAL:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(), 
-											origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize);
+					g.drawLine(line.toFloat(), pipeThickness);
 				}
 				break;
 
 			case TilePiece::TYPE_HORIZONTAL:
 				{
 					line = juce::Line<int>(	origin.getX(), 
-											origin.getY() + HALFTILE,
-											origin.getX() + TILESIZE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 				}
 				break;
 
 			case TilePiece::TYPE_NW_ELBOW:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(), 
-											origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getX() + halfTile,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					line = juce::Line<int>(	origin.getX(), 
-											origin.getY() + HALFTILE,
-											origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getY() + halfTile,
+											origin.getX() + halfTile,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_NE_ELBOW:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(), 
-											origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
-					line = juce::Line<int>(	origin.getX() + HALFTILE, 
-											origin.getY() + HALFTILE, 
-											origin.getX() + TILESIZE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getX() + halfTile,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_SE_ELBOW:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
-											origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
-											origin.getX() + TILESIZE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize);
+					g.drawLine(line.toFloat(), pipeThickness);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
 
 			case TilePiece::TYPE_SW_ELBOW:
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + HALFTILE,
-											origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + halfTile,
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize);
+					g.drawLine(line.toFloat(), pipeThickness);
 					line = juce::Line<int>(	origin.getX(), 
-											origin.getY() + HALFTILE, 
-											origin.getX() + HALFTILE, 
-											origin.getY() + HALFTILE);
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+											origin.getY() + halfTile,
+											origin.getX() + halfTile,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), pipeThickness);
 					g.fillEllipse(elbowJoint);
 				}
 				break;
@@ -558,21 +597,21 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 						// Draw horizontal pipe first. 
 						// Vertical pipe will be drawn in DrawCrossSecondWay()
 						line = juce::Line<int>(	origin.getX(), 
-												origin.getY() + HALFTILE, 
-												origin.getX() + TILESIZE, 
-												origin.getY() + HALFTILE);
+												origin.getY() + halfTile,
+												origin.getX() + m_tileSize,
+												origin.getY() + halfTile);
 					}
 					else
 					{
 						// Draw vertica pipe first. 
 						// Horizontal pipe will be drawn in DrawCrossSecondWay()
-						line = juce::Line<int>(	origin.getX() + HALFTILE,
+						line = juce::Line<int>(	origin.getX() + halfTile,
 												origin.getY(), 
-												origin.getX() + HALFTILE, 
-												origin.getY() + TILESIZE);
+												origin.getX() + halfTile,
+												origin.getY() + m_tileSize);
 					}
 
-					g.drawLine(line.toFloat(), PIPE_THICKNESS);
+					g.drawLine(line.toFloat(), pipeThickness);
 				}
 				break;
 
@@ -594,17 +633,17 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			static const float oozealfThickness = OOZE_THICKNESS / 2.0f;
 			bool overHalf(pipe->GetOozeLevel() >= 50.0f);
 			bool underHalf(pipe->GetOozeLevel() < 50.0f);
-			int fill = static_cast<int>(TILESIZE * pipe->GetOozeLevel() / MAX_OOZE_LEVEL);
+			int fill = static_cast<int>(m_tileSize * pipe->GetOozeLevel() / MAX_OOZE_LEVEL);
 
 			juce::Line<int> line;
 			g.setColour(juce::Colours::limegreen);
 
 			// Ellipse rect used to have nice rounded corners in the elbow pipes.
-			juce::Rectangle<float> elbowJoint(	origin.getX() + HALFTILE - oozealfThickness,
-												origin.getY() + HALFTILE - oozealfThickness,
+			int halfTile = m_tileSize / 2;
+			juce::Rectangle<float> elbowJoint(	origin.getX() + halfTile - oozealfThickness,
+												origin.getY() + halfTile - oozealfThickness,
 												OOZE_THICKNESS, 
 												OOZE_THICKNESS);
-
 
 			switch (pipe->GetType())
 			{
@@ -612,10 +651,10 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					if (overHalf)
 					{
-						line = juce::Line<int>(	origin.getX() + HALFTILE, 
-												origin.getY() + TILESIZE - fill,
-												origin.getX() + HALFTILE,
-												origin.getY() + HALFTILE);
+						line = juce::Line<int>(	origin.getX() + halfTile,
+												origin.getY() + m_tileSize - fill,
+												origin.getX() + halfTile,
+												origin.getY() + halfTile);
 						g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						g.fillEllipse(elbowJoint);
 					}
@@ -626,9 +665,9 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					if (overHalf)
 					{
-						line = juce::Line<int>(	origin.getX() + HALFTILE, 
-												origin.getY() + HALFTILE,
-												origin.getX() + HALFTILE,
+						line = juce::Line<int>(	origin.getX() + halfTile,
+												origin.getY() + halfTile,
+												origin.getX() + halfTile,
 												origin.getY() + fill);
 						g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						g.fillEllipse(elbowJoint);
@@ -640,10 +679,10 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					if (overHalf)
 					{
-						line = juce::Line<int>(	origin.getX() + HALFTILE, 
-												origin.getY() + HALFTILE, 
+						line = juce::Line<int>(	origin.getX() + halfTile,
+												origin.getY() + halfTile,
 												origin.getX() + fill, 
-												origin.getY() + HALFTILE);
+												origin.getY() + halfTile);
 						g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						g.fillEllipse(elbowJoint);
 					}
@@ -654,10 +693,10 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					if (overHalf)
 					{
-						line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-												origin.getY() + HALFTILE,
-												origin.getX() + HALFTILE,
-												origin.getY() + HALFTILE);
+						line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+												origin.getY() + halfTile,
+												origin.getX() + halfTile,
+												origin.getY() + halfTile);
 						g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						g.fillEllipse(elbowJoint);
 					}
@@ -667,14 +706,14 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			case TilePiece::TYPE_VERTICAL:
 				{
 					if (pipe->GetFlowDirection() == Pipe::DIR_N)
-						line = juce::Line<int>(	origin.getX() + HALFTILE, 
-												origin.getY() + TILESIZE - fill, 
-												origin.getX() + HALFTILE, 
-												origin.getY() + TILESIZE);
+						line = juce::Line<int>(	origin.getX() + halfTile,
+												origin.getY() + m_tileSize - fill,
+												origin.getX() + halfTile,
+												origin.getY() + m_tileSize);
 					else if (pipe->GetFlowDirection() == Pipe::DIR_S)
-						line = juce::Line<int>(	origin.getX() + HALFTILE, 
+						line = juce::Line<int>(	origin.getX() + halfTile,
 												origin.getY(), 
-												origin.getX() + HALFTILE, 
+												origin.getX() + halfTile,
 												origin.getY() + fill);
 
 					g.drawLine(line.toFloat(), OOZE_THICKNESS);
@@ -685,14 +724,14 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				{
 					if (pipe->GetFlowDirection() == Pipe::DIR_E)
 						line = juce::Line<int>(	origin.getX(), 
-												origin.getY() + HALFTILE, 
+												origin.getY() + halfTile,
 												origin.getX() + fill, 
-												origin.getY() + HALFTILE);
+												origin.getY() + halfTile);
 					else if (pipe->GetFlowDirection() == Pipe::DIR_W)
-						line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-												origin.getY() + HALFTILE, 
-												origin.getX() + TILESIZE, 
-												origin.getY() + HALFTILE);
+						line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+												origin.getY() + halfTile,
+												origin.getX() + m_tileSize,
+												origin.getY() + halfTile);
 
 					g.drawLine(line.toFloat(), OOZE_THICKNESS);
 				}
@@ -705,22 +744,22 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 						if (underHalf)
 						{
 							line = juce::Line<int>(	origin.getX(), 
-													origin.getY() + HALFTILE, 
+													origin.getY() + halfTile,
 													origin.getX() + fill, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
 							line = juce::Line<int>(	origin.getX(), 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile,
+													origin.getX() + halfTile,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE - fill, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + halfTile,
+													origin.getY() + m_tileSize - fill,
+													origin.getX() + halfTile,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -729,23 +768,23 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile,
 													origin.getY(), 
-													origin.getX() + HALFTILE, 
+													origin.getX() + halfTile,
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile,
 													origin.getY(), 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+													origin.getX() + halfTile,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+													origin.getY() + halfTile,
+													origin.getX() + halfTile,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -759,23 +798,23 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + TILESIZE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+													origin.getY() + halfTile, 
+													origin.getX() + m_tileSize,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + TILESIZE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + m_tileSize,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE - fill, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + m_tileSize - fill,
+													origin.getX() + halfTile, 
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -784,23 +823,23 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
 													origin.getY(), 
-													origin.getX() + HALFTILE, 
+													origin.getX() + halfTile, 
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
 													origin.getY(), 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+													origin.getX() + halfTile, 
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
 													origin.getX() + fill, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -814,22 +853,22 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + TILESIZE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+													origin.getY() + halfTile, 
+													origin.getX() + m_tileSize,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + TILESIZE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + m_tileSize,
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
@@ -839,23 +878,23 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE - fill, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + m_tileSize - fill,
+													origin.getX() + halfTile, 
+													origin.getY() + m_tileSize);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
+													origin.getY() + m_tileSize);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
 													origin.getX() + fill, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -870,21 +909,21 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 						if (underHalf)
 						{
 							line = juce::Line<int>(	origin.getX(), 
-													origin.getY() + HALFTILE, 
+													origin.getY() + halfTile, 
 													origin.getX() + fill, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
 							line = juce::Line<int>(	origin.getX(), 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
 													origin.getY() + fill);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
@@ -894,23 +933,23 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					{
 						if (underHalf)
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE - fill, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + m_tileSize - fill,
+													origin.getX() + halfTile, 
+													origin.getY() + m_tileSize);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 						}
 						else
 						{
-							line = juce::Line<int>(	origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + TILESIZE);
+							line = juce::Line<int>(	origin.getX() + halfTile, 
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
+													origin.getY() + m_tileSize);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
-							line = juce::Line<int>(	origin.getX() + TILESIZE - fill, 
-													origin.getY() + HALFTILE, 
-													origin.getX() + HALFTILE, 
-													origin.getY() + HALFTILE);
+							line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+													origin.getY() + halfTile, 
+													origin.getX() + halfTile, 
+													origin.getY() + halfTile);
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
 							g.fillEllipse(elbowJoint);
 						}
@@ -924,22 +963,22 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 					{
 						// Draw horizontally flowing ooze first.
-						fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
+						fill = static_cast<int>(m_tileSize * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
 						if (fill > 0)
 						{
 							if (pipe->GetFlowDirection() == Pipe::DIR_E)
 							{
 								line = juce::Line<int>(	origin.getX(),
-														origin.getY() + HALFTILE,
+														origin.getY() + halfTile,
 														origin.getX() + fill,
-														origin.getY() + HALFTILE);
+														origin.getY() + halfTile);
 							}
 							else
 							{
-								line = juce::Line<int>(	origin.getX() + TILESIZE - fill,
-														origin.getY() + HALFTILE,
-														origin.getX() + TILESIZE,
-														origin.getY() + HALFTILE);
+								line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+														origin.getY() + halfTile,
+														origin.getX() + m_tileSize,
+														origin.getY() + halfTile);
 							}
 
 							g.drawLine(line.toFloat(), OOZE_THICKNESS);
@@ -949,21 +988,21 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 					else
 					{
 						// Draw vertically flowing ooze first.
-						fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
+						fill = static_cast<int>(m_tileSize * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
 						if (fill > 0)
 						{
 							if (pipe->GetFlowDirection() == Pipe::DIR_N)
 							{
-								line = juce::Line<int>(	origin.getX() + HALFTILE,
-														origin.getY() + TILESIZE - fill,
-														origin.getX() + HALFTILE,
-														origin.getY() + TILESIZE);
+								line = juce::Line<int>(	origin.getX() + halfTile,
+														origin.getY() + m_tileSize - fill,
+														origin.getX() + halfTile,
+														origin.getY() + m_tileSize);
 							}
 							else
 							{
-								line = juce::Line<int>(	origin.getX() + HALFTILE,
+								line = juce::Line<int>(	origin.getX() + halfTile,
 														origin.getY(),
-														origin.getX() + HALFTILE,
+														origin.getX() + halfTile,
 														origin.getY() + fill);
 							}
 
@@ -987,58 +1026,61 @@ void MainComponent::DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin,
 		Cross* crossTile = dynamic_cast<Cross*>(tile);
 
 		juce::Line<int> line;
-		static const float pipeHalfThickness = PIPE_THICKNESS / 2.0f;
+		int halfTile = m_tileSize / 2;
+		float pipeThickness = m_tileSize / 3.5f;
+		int pipeHalfThickness = static_cast<int>(m_tileSize / 6.0f);
 		g.setColour(juce::Colours::black);
 
 		// Draw pipe first
 		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 		{
 			// Vertical pipe.
-			line = juce::Line<int>(	origin.getX() + HALFTILE, 
+			line = juce::Line<int>(	origin.getX() + halfTile, 
 									origin.getY(), 
-									origin.getX() + HALFTILE, 
-									origin.getY() + TILESIZE);
+									origin.getX() + halfTile, 
+									origin.getY() + m_tileSize);
 		}
 		else
 		{
 			// Horizontal pipe. 
 			line = juce::Line<int>(	origin.getX(), 
-									origin.getY() + HALFTILE, 
-									origin.getX() + TILESIZE, 
-									origin.getY() + HALFTILE);
+									origin.getY() + halfTile, 
+									origin.getX() + m_tileSize,
+									origin.getY() + halfTile);
 		}
-		g.drawLine(line.toFloat(), PIPE_THICKNESS);
+		g.drawLine(line.toFloat(), pipeThickness);
 
 		// Little lines along the pipe, which make the separation between horizontal and vertical 
 		// components of the cross-pipe more visually obvious.
+		float littleLineThickness = (m_tileSize * 5.0f) / 70.0f;
 		g.setColour(GetTileColourForLevel(Controller::GetInstance()->GetDifficultyLevel()));
 		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 		{
 			// Vertical little lines
-			line = juce::Line<int>(	static_cast<int>(origin.getX() + HALFTILE - pipeHalfThickness - 1),
+			line = juce::Line<int>(	static_cast<int>(origin.getX() + halfTile - pipeHalfThickness - 1),
 									origin.getY() + 1,
-									static_cast<int>(origin.getX() + HALFTILE - pipeHalfThickness - 1),
-									origin.getY() + TILESIZE - 1);
-			g.drawLine(line.toFloat(), 2.0f);
-			line = juce::Line<int>( static_cast<int>(origin.getX() + HALFTILE + pipeHalfThickness + 1),
+									static_cast<int>(origin.getX() + halfTile - pipeHalfThickness - 1),
+									origin.getY() + m_tileSize - 1);
+			g.drawLine(line.toFloat(), littleLineThickness);
+			line = juce::Line<int>( static_cast<int>(origin.getX() + halfTile + pipeHalfThickness + 1),
 									origin.getY() + 1,
-									static_cast<int>(origin.getX() + HALFTILE + pipeHalfThickness + 1),
-									origin.getY() + TILESIZE - 1);
-			g.drawLine(line.toFloat(), 2.0f);
+									static_cast<int>(origin.getX() + halfTile + pipeHalfThickness + 1),
+									origin.getY() + m_tileSize - 1);
+			g.drawLine(line.toFloat(), littleLineThickness);
 		}
 		else
 		{
 			// Horizontal little lines
 			line = juce::Line<int>(	origin.getX() + 1,
-									origin.getY() + HALFTILE - static_cast<int>(pipeHalfThickness) - 1,
-									origin.getX() + TILESIZE - 1,
-									origin.getY() + HALFTILE - static_cast<int>(pipeHalfThickness) - 1);
-			g.drawLine(line.toFloat(), 2.0f);
+									origin.getY() + halfTile - static_cast<int>(pipeHalfThickness) - 1,
+									origin.getX() + m_tileSize - 1,
+									origin.getY() + halfTile - static_cast<int>(pipeHalfThickness) - 1);
+			g.drawLine(line.toFloat(), littleLineThickness);
 			line = juce::Line<int>(	origin.getX() + 1,
-									origin.getY() + HALFTILE + static_cast<int>(pipeHalfThickness) + 1,
-									origin.getX() + TILESIZE - 1,
-									origin.getY() + HALFTILE + static_cast<int>(pipeHalfThickness) + 1);
-			g.drawLine(line.toFloat(), 2.0f);
+									origin.getY() + halfTile + static_cast<int>(pipeHalfThickness) + 1,
+									origin.getX() + m_tileSize - 1,
+									origin.getY() + halfTile + static_cast<int>(pipeHalfThickness) + 1);
+			g.drawLine(line.toFloat(), littleLineThickness);
 		}
 
 		// Draw ooze
@@ -1048,21 +1090,21 @@ void MainComponent::DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin,
 		// Vertically flowing ooze
 		if (crossTile->GetBackgroundWay() == Cross::WAY_HORIZONTAL)
 		{
-			fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
+			fill = static_cast<int>(m_tileSize * crossTile->GetOozeLevel(Cross::WAY_VERTICAL) / MAX_OOZE_LEVEL);
 			if (fill > 0)
 			{
 				if (crossTile->GetFlowDirection() == Pipe::DIR_N)
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE - fill,
-											origin.getX() + HALFTILE,
-											origin.getY() + TILESIZE);
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + m_tileSize - fill,
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize);
 				}
 				else
 				{
-					line = juce::Line<int>(	origin.getX() + HALFTILE,
+					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(),
-											origin.getX() + HALFTILE,
+											origin.getX() + halfTile,
 											origin.getY() + fill);
 				}
 
@@ -1073,22 +1115,22 @@ void MainComponent::DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin,
 		// Hoizontally flowing ooze
 		else
 		{
-			fill = static_cast<int>(TILESIZE * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
+			fill = static_cast<int>(m_tileSize * crossTile->GetOozeLevel(Cross::WAY_HORIZONTAL) / MAX_OOZE_LEVEL);
 			if (fill > 0)
 			{
 				if (crossTile->GetFlowDirection() == Pipe::DIR_E)
 				{
 					line = juce::Line<int>(	origin.getX(),
-											origin.getY() + HALFTILE,
+											origin.getY() + halfTile,
 											origin.getX() + fill,
-											origin.getY() + HALFTILE);
+											origin.getY() + halfTile);
 				}
 				else
 				{
-					line = juce::Line<int>(	origin.getX() + TILESIZE - fill,
-											origin.getY() + HALFTILE,
-											origin.getX() + TILESIZE,
-											origin.getY() + HALFTILE);
+					line = juce::Line<int>(	origin.getX() + m_tileSize - fill,
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize,
+											origin.getY() + halfTile);
 				}
 
 				g.drawLine(line.toFloat(), OOZE_THICKNESS);
@@ -1101,7 +1143,7 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 {
 	// Frame around tile
 	g.setColour(juce::Colours::white);
-	g.drawRect(origin.getX(), origin.getY(), TILESIZE, TILESIZE, 1);
+	g.drawRect(origin.getX(), origin.getY(), m_tileSize, m_tileSize, 1);
 
 	if (tile->GetType() != TilePiece::TYPE_NONE)
 	{
@@ -1113,8 +1155,9 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 			if (exp > 0)
 			{
 				juce::Path starPath;
-				starPath.addStar(juce::Point<float>(static_cast<float>(	origin.getX() + HALFTILE),
-																		static_cast<float>(origin.getY() + HALFTILE)),
+				int halfTile = m_tileSize / 2;
+				starPath.addStar(juce::Point<float>(static_cast<float>(	origin.getX() + halfTile),
+																		static_cast<float>(origin.getY() + halfTile)),
 																		7,								// Number of peaks
 																		static_cast<float>(exp * 4),	// Inner radius
 																		static_cast<float>(exp * 8),	// Outer radius
@@ -1133,27 +1176,28 @@ void MainComponent::DrawSpill(juce::Point<int> origin, juce::Graphics& g)
 		Pipe* oozingPipe = dynamic_cast<Pipe*>(Controller::GetInstance()->GetBoard()->GetOozingTile());
 		if (oozingPipe != nullptr)
 		{
-			int qt(TILESIZE / 4);
+			int halfTile = m_tileSize / 2;
+			int qt(m_tileSize / 4);
 			Pipe::Direction spillDir = oozingPipe->GetFlowDirection();
 			juce::Rectangle<int> bigRec;
 			juce::Rectangle<int> smlRec;
 			switch (spillDir)
 			{
 			case Pipe::DIR_N:
-				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() - TILESIZE, TILESIZE, TILESIZE);
-				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() - HALFTILE, HALFTILE, HALFTILE);
+				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() - m_tileSize, m_tileSize, m_tileSize);
+				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() - halfTile, halfTile, halfTile);
 				break;
 			case Pipe::DIR_S:
-				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() + TILESIZE, TILESIZE, TILESIZE);
-				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() + TILESIZE, HALFTILE, HALFTILE);
+				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() + m_tileSize, m_tileSize, m_tileSize);
+				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() + m_tileSize, halfTile, halfTile);
 				break;
 			case Pipe::DIR_E:
-				bigRec = juce::Rectangle<int>(origin.getX() + TILESIZE, origin.getY(), TILESIZE, TILESIZE);
-				smlRec = juce::Rectangle<int>(origin.getX() + TILESIZE, origin.getY() + qt, HALFTILE, HALFTILE);
+				bigRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY(), m_tileSize, m_tileSize);
+				smlRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY() + qt, halfTile, halfTile);
 				break;
 			case Pipe::DIR_W:
-				bigRec = juce::Rectangle<int>(origin.getX() - TILESIZE, origin.getY(), TILESIZE, TILESIZE);
-				smlRec = juce::Rectangle<int>(origin.getX() - HALFTILE, origin.getY() + qt, HALFTILE, HALFTILE);
+				bigRec = juce::Rectangle<int>(origin.getX() - m_tileSize, origin.getY(), m_tileSize, m_tileSize);
+				smlRec = juce::Rectangle<int>(origin.getX() - halfTile, origin.getY() + qt, halfTile, halfTile);
 				break;
 			}
 
@@ -1170,14 +1214,15 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 	Board* board(Controller::GetInstance()->GetBoard());
 
 	// Draw empty vial (background)
-	static constexpr int vialHeight = 118;
+	//static constexpr int vialHeight = 118;
+	int vialHeight = static_cast<int>(getLocalBounds().getHeight() / 5.2542f);
 	juce::Rectangle<int> vialRect(origin.getX(), origin.getY(), 22, vialHeight);
 	g.setColour(juce::Colours::black);
 	g.fillRect(vialRect);
 
 	// Ooze inside the vial.
 	g.setColour(juce::Colours::limegreen);
-	static constexpr int oozeMaxHeight = vialHeight - 6;
+	int oozeMaxHeight = vialHeight - 6;
 	int oozeHeight;
 	if (m_countDown > 0)
 	{
@@ -1212,6 +1257,7 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
 {
 	Board* board(Controller::GetInstance()->GetBoard());
+	int halfTile = m_tileSize / 2;
 
 	for (int i = 0; i < Board::MAX_NUM_BOMBS; i++)
 	{
@@ -1219,18 +1265,18 @@ void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
 		if (i < board->GetNumBombs())
 		{
 			g.setColour(juce::Colours::red);
-			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat());
+			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat());
 		}
 
 		// Draw the one used up bomb, which will soon become available again.
 		else if (i == board->GetNumBombs())
 		{
 			g.setColour(juce::Colour(static_cast<juce::uint8>(67 + board->GetPercentUntilFreeBomb()), 67, 67));
-			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat());
+			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat());
 		}
 
 		g.setColour(juce::Colours::white);
-		g.drawEllipse(juce::Rectangle<int>(p.getX() + i * (TILESIZE - 1), p.getY(), HALFTILE, HALFTILE).toFloat(), 1.0f);
+		g.drawEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat(), 1.0f);
 	}
 }
 

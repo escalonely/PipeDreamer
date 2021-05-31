@@ -132,7 +132,9 @@ public:
 			setUsingNativeTitleBar(true);
 			setContentOwned(new MainComponent(), true);
 
-			setResizable(false, false);
+			// TODO: ResizableCornerComponent not working!
+			setResizable(true, false);
+			setResizeLimits(594, 414, 1920, 1080);
 			centreWithSize(getWidth(), getHeight());
 
 			setVisible(true);

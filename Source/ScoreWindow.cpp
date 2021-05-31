@@ -164,16 +164,6 @@ void AdvanceWindow::paint(juce::Graphics& g)
 HighScoreWindow::HighScoreWindow(Controller::ScoreDetails details)
 	: ScoreWindow(details)
 {
-	setSize(900, 620);
-	
-	int buttonVPos = getLocalBounds().getHeight() - 192;
-	int rectWidth = 320;
-
-	// Initialize rectangles for the messageBox, and the two buttons
-	m_messageBoxRect = juce::Rectangle<int>(MainComponent::TILESIZE, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2));
-	m_okButtonRect = juce::Rectangle<int>(MainComponent::TILESIZE + 5, buttonVPos, rectWidth - 10, BUTTON_HEIGHT);
-	m_quitButtonRect = juce::Rectangle<int>(MainComponent::TILESIZE + 5, buttonVPos + BUTTON_HEIGHT + 5, rectWidth - 10, BUTTON_HEIGHT);
-
 	Controller* controller = Controller::GetInstance();
 	if (controller != nullptr)
 	{
@@ -251,30 +241,54 @@ void HighScoreWindow::RefreshCachedScore(std::vector<scoreEntry>& scoreHash)
 	}
 }
 
+void HighScoreWindow::resized()
+{
+	MainComponent* mainComp = dynamic_cast<MainComponent*>(getParentComponent());
+	if (mainComp != nullptr)
+	{
+		// Resize to match the size of the MainComponent.
+		setSize(mainComp->getLocalBounds().getWidth(), mainComp->getLocalBounds().getHeight());
+
+		int tileSize(mainComp->GetTileSize());
+		int buttonVPos = getLocalBounds().getHeight() - tileSize - (BUTTON_HEIGHT * 2) - 12;
+		int rectWidth = 320;
+
+		// Initialize rectangles for the messageBox, and the two buttons
+		m_messageBoxRect = juce::Rectangle<int>(tileSize, tileSize, rectWidth, getLocalBounds().getHeight() - (tileSize * 2));
+		m_okButtonRect = juce::Rectangle<int>(tileSize + 5, buttonVPos, rectWidth - 10, BUTTON_HEIGHT);
+		m_quitButtonRect = juce::Rectangle<int>(tileSize + 5, buttonVPos + BUTTON_HEIGHT + 5, rectWidth - 10, BUTTON_HEIGHT);
+	}
+}
+
 void HighScoreWindow::paint(juce::Graphics& g)
 {
 	// Draws the player score breakdown panel.
 	ScoreWindow::paint(g);
 
-	int rectWidth = (getLocalBounds().getWidth() - 320) - (MainComponent::TILESIZE * 2);
+	int tileSize(0);
+	MainComponent* mainComp = dynamic_cast<MainComponent*>(getParentComponent());
+	if (mainComp != nullptr)
+		tileSize = mainComp->GetTileSize();
+
+	int rectWidth = (getLocalBounds().getWidth() - 320) - (tileSize * 2);
 
 	// High-score box background colour
 	g.setColour(juce::Colour(27, 27, 27));
-	g.fillRect(juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2)));
+	g.fillRect(juce::Rectangle<int>(tileSize + 320 - 2, tileSize, rectWidth, getLocalBounds().getHeight() - (tileSize * 2)));
 
 	// Frame
 	g.setColour(juce::Colours::black);
-	g.drawRect(juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE, rectWidth, getLocalBounds().getHeight() - (MainComponent::TILESIZE * 2)), 4);
+	g.drawRect(juce::Rectangle<int>(tileSize + 320 - 2, tileSize, rectWidth, getLocalBounds().getHeight() - (tileSize * 2)), 4);
 
 	// Title
 	g.setColour(juce::Colours::grey);
 	g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
-	g.drawText("High Score", juce::Rectangle<int>(MainComponent::TILESIZE + 320 - 2, MainComponent::TILESIZE + 10, rectWidth, 60), juce::Justification::centred);
+	g.drawText("High Score", juce::Rectangle<int>(tileSize + 320 - 2, tileSize + 10, rectWidth, 60), juce::Justification::centred);
 
-	int vPos = MainComponent::TILESIZE + 80;
-	int hPosName = MainComponent::TILESIZE + 360;
-	int hPosScore = MainComponent::TILESIZE + 460;
-	int hPosDate = MainComponent::TILESIZE + 590;
+	int vPos = tileSize + 80;
+	int hPosName = tileSize + 360;
+	int hPosScore = tileSize + 460;
+	int hPosDate = tileSize + 590;
 	int fieldHeight = 30;
 	int nameWidth = 100;
 	int scoreWidth = 100;

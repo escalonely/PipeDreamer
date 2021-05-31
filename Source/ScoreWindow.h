@@ -134,6 +134,11 @@ public:
 	void paint(juce::Graphics&) override;
 
 	/**
+	 * Reimplemented from juce::Component.
+	 */
+	void resized() override;
+
+	/**
 	 * Max number of entries to show in the high score table.
 	 */
 	static const int MAX_SCORE_ROWS;
