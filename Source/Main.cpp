@@ -134,7 +134,7 @@ public:
 
 			// TODO: ResizableCornerComponent not working!
 			setResizable(true, false);
-			setResizeLimits(594, 414, 1920, 1080);
+			setResizeLimits(594, 414, 2560, 1440);
 			centreWithSize(getWidth(), getHeight());
 
 			setVisible(true);
