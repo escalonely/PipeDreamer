@@ -199,6 +199,7 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 							if ((clickedPipe != nullptr) &&
 								(clickedPipe->IsEmpty()) &&		// Only empty tiles can be replaced.
 								(!clickedPipe->IsStart()) &&	// Cannot replace starter tiles.
+								(!clickedPipe->IsStop()) &&		// Cannot replace stopper tiles.
 								(board->PopBomb()))				// Need bombs to replace existing pipe tiles.
 							{
 								replace = true;
