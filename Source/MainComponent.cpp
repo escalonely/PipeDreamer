@@ -1224,44 +1224,62 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 void MainComponent::DrawStartStopMarker(Pipe* pipe, juce::Point<int> origin, juce::Graphics& g)
 {
 	int halfTile = m_tileSize / 2;
-
-	// The marker sits right on top of the tile's opening, at the edge facing its pipe direction.
-	juce::Point<int> port(origin.getX() + halfTile, origin.getY() + halfTile);
-	switch (pipe->GetType())
-	{
-		case TilePiece::TYPE_START_N:
-		case TilePiece::TYPE_STOP_N:
-			port = juce::Point<int>(origin.getX() + halfTile, origin.getY());
-			break;
-		case TilePiece::TYPE_START_S:
-		case TilePiece::TYPE_STOP_S:
-			port = juce::Point<int>(origin.getX() + halfTile, origin.getY() + m_tileSize);
-			break;
-		case TilePiece::TYPE_START_E:
-		case TilePiece::TYPE_STOP_E:
-			port = juce::Point<int>(origin.getX() + m_tileSize, origin.getY() + halfTile);
-			break;
-		case TilePiece::TYPE_START_W:
-		case TilePiece::TYPE_STOP_W:
-			port = juce::Point<int>(origin.getX(), origin.getY() + halfTile);
-			break;
-		default:
-			break;
-	}
-
-	float markerSize = m_tileSize / 5.0f;
-	juce::Rectangle<float> markerRect(	port.getX() - markerSize / 2.0f,
-										port.getY() - markerSize / 2.0f,
-										markerSize, markerSize);
+	juce::Point<float> center(	static_cast<float>(origin.getX() + halfTile),
+								static_cast<float>(origin.getY() + halfTile));
 
 	if (pipe->IsStart())
 	{
-		// Spout: plain white dot where the ooze emerges.
+		// Direction the ooze will flow out towards.
+		juce::Point<float> direction(0.0f, 0.0f);
+		switch (pipe->GetType())
+		{
+			case TilePiece::TYPE_START_N:	direction = juce::Point<float>(0.0f, -1.0f);	break;
+			case TilePiece::TYPE_START_S:	direction = juce::Point<float>(0.0f, 1.0f);	break;
+			case TilePiece::TYPE_START_E:	direction = juce::Point<float>(1.0f, 0.0f);	break;
+			case TilePiece::TYPE_START_W:	direction = juce::Point<float>(-1.0f, 0.0f);	break;
+			default: break;
+		}
+
+		// A small arrow sitting just behind the pipe's center, tip pointing towards the opening,
+		// without overlapping the black joint dot drawn on top of it in DrawTile().
+		float gapFromCenter = m_tileSize / 8.0f;
+		float arrowLength = m_tileSize / 6.0f;
+		juce::Point<float> tip(center.getX() - direction.getX() * gapFromCenter, center.getY() - direction.getY() * gapFromCenter);
+		juce::Point<float> tail(tip.getX() - direction.getX() * arrowLength, tip.getY() - direction.getY() * arrowLength);
+
+		juce::Path arrowPath;
+		arrowPath.addArrow(juce::Line<float>(tail, tip), m_tileSize / 10.0f, m_tileSize / 5.0f, m_tileSize / 5.0f);
+
 		g.setColour(juce::Colours::white);
-		g.fillEllipse(markerRect);
+		g.fillPath(arrowPath);
 	}
 	else
 	{
+		// The marker sits right on top of the tile's opening, at the edge facing its pipe direction.
+		juce::Point<int> port(origin.getX() + halfTile, origin.getY() + halfTile);
+		switch (pipe->GetType())
+		{
+			case TilePiece::TYPE_STOP_N:
+				port = juce::Point<int>(origin.getX() + halfTile, origin.getY());
+				break;
+			case TilePiece::TYPE_STOP_S:
+				port = juce::Point<int>(origin.getX() + halfTile, origin.getY() + m_tileSize);
+				break;
+			case TilePiece::TYPE_STOP_E:
+				port = juce::Point<int>(origin.getX() + m_tileSize, origin.getY() + halfTile);
+				break;
+			case TilePiece::TYPE_STOP_W:
+				port = juce::Point<int>(origin.getX(), origin.getY() + halfTile);
+				break;
+			default:
+				break;
+		}
+
+		float markerSize = m_tileSize / 5.0f;
+		juce::Rectangle<float> markerRect(	port.getX() - markerSize / 2.0f,
+											port.getY() - markerSize / 2.0f,
+											markerSize, markerSize);
+
 		// Goal: little gold bullseye marking the finish.
 		g.setColour(juce::Colours::black);
 		g.fillEllipse(markerRect.expanded(1.5f));
