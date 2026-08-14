@@ -64,6 +64,7 @@ void Board::Reset()
 	m_score = 0;
 	m_scoreUntilFreeBomb = 0;
 	m_numBombs = MAX_NUM_BOMBS;
+	m_victory = false;
 
 	// Fill the board with (empty) tiles.
 	for (int i = 0; i < GetNumCols(); i++)
@@ -140,7 +141,7 @@ bool Board::Pump(float amount)
 			if (oozingPipe->IsStop())
 			{
 				// Ooze flowing into a Stop tile. You won!
-				// TODO: implement victory
+				m_victory = true;
 				return false;
 			}
 
@@ -234,6 +235,11 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) const
 int Board::GetScoreValue() const
 {
 	return m_score;
+}
+
+bool Board::IsVictory() const
+{
+	return m_victory;
 }
 
 void Board::CreateRandomStartAndStop()

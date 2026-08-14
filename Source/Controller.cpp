@@ -227,10 +227,10 @@ Controller::ScoreDetails Controller::GetScoreDetails() const
 	// Add score gained to the cumulative score.
 	details.total = details.score + details.bonus + details.carryover;
 
-	// If score is high enough, score window offers 
-	// a button to continue to next level.
+	// If score is high enough, or the ooze reached the Stop tile, score window
+	// offers a button to continue to next level.
 	details.level = m_difficultyLevel;
-	details.advance = (details.score >= MIN_SCORE_TO_ADVANCE);
+	details.advance = (details.score >= MIN_SCORE_TO_ADVANCE) || m_board->IsVictory();
 
 	return details;
 }
@@ -289,7 +289,7 @@ float Controller::GetCurrentOozePerPump() const
 
 	// If fast-forward button is currently toggled on, increase ooze per pump.
 	if (m_fastForward)
-		return oozePerLevel[level] * 10.0f;
+		return oozePerLevel[level] * 0;//10.0f;
 
 	return oozePerLevel[level];
 }

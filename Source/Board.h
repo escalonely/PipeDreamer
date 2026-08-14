@@ -105,9 +105,15 @@ public:
 	 * @param amount	Amount of ooze to insert. The higher the level, 
 	 *					the more ooze amount will be pumped every tick.
 	 * @return	True if the ooze is still contained within m_oozingTile or it's neighbor.
-	 *			False if the ooze has now spilled.
+	 *			False if the ooze has now spilled, or reached the Stop tile (see IsVictory()).
 	 */
 	bool Pump(float amount);
+
+	/**
+	 * True if the ooze has reached the Stop tile, i.e. the player has won this round.
+	 * Only meaningful once Pump() has returned false.
+	 */
+	bool IsVictory() const;
 
 	/**
 	 * Resets score, bombs, clears all tiles, and repositions starting tile
@@ -171,6 +177,11 @@ private:
 	 * Pipe piece in which the ooze level is currently increasing.
 	 */
 	TilePiece* m_oozingTile;
+
+	/**
+	 * True if the ooze has reached the Stop tile. Reset back to false at the start of every round.
+	 */
+	bool m_victory;
 
 	int m_numCols;
 	int m_numRows;
