@@ -419,12 +419,6 @@ void MainComponent::DrawLevelAndScore(juce::Graphics& g)
 	g.drawText("Score:", textRect, juce::Justification::left, false);
 	// g.drawRect(textRect, 1.0f); // frame
 
-	// If score this round is high enough to advance to next difficulty level, highlight the number.
-	if (playerScore >= Controller::MIN_SCORE_TO_ADVANCE)
-	{
-		g.setColour(juce::Colours::yellow);
-		g.setFont(GetFont(LABEL_BSCORE));
-	}
 	textRect = juce::Rectangle<int>(static_cast<int>(getLocalBounds().getWidth() / 2.1880f), 20, 
 									static_cast<int>(getLocalBounds().getWidth() / 5.625f), halfTile);
 	g.drawText(juce::String(playerScore), textRect, juce::Justification::left, false);
@@ -1268,8 +1262,6 @@ void MainComponent::DrawSpill(juce::Point<int> origin, juce::Graphics& g)
 
 void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 {
-	Board* board(Controller::GetInstance()->GetBoard());
-
 	// Draw empty vial (background)
 	//static constexpr int vialHeight = 118;
 	int vialHeight = static_cast<int>(getLocalBounds().getHeight() / 5.2542f);
@@ -1286,15 +1278,9 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 		// Starts at 0, goes to vialHeight		
 		oozeHeight = static_cast<int>(oozeMaxHeight - ((m_countDown * oozeMaxHeight) / Controller::GetInstance()->GetCurrentCountdown()));
 	}
-	else if (board->GetScoreValue() < Controller::MIN_SCORE_TO_ADVANCE)
-	{
-		// Starts at vialHeight, goes to 0.
-		oozeHeight = static_cast<int>(((Controller::MIN_SCORE_TO_ADVANCE - (board->GetScoreValue())) * oozeMaxHeight) / Controller::MIN_SCORE_TO_ADVANCE);
-	}
 	else
 	{
-		// Full yellow vial.
-		g.setColour(juce::Colours::yellow);
+		// Ooze is flowing; hold the vial full until the round ends.
 		oozeHeight = oozeMaxHeight;
 	}
 	g.fillRect(juce::Rectangle<int>(origin.getX() + 3, origin.getY() + 3 + oozeMaxHeight - oozeHeight, 16, oozeHeight));

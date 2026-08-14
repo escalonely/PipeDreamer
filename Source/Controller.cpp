@@ -34,11 +34,6 @@ SOFTWARE.
 #include "Randomizer.h"
 
 
-// ---- Helper types and constants ----
-
-const int Controller::MIN_SCORE_TO_ADVANCE(200);
-
-
 /**
  * Singleton initialization.
  */
@@ -173,33 +168,13 @@ bool Controller::HigherScoreThan(std::pair<juce::String, int> const &a, std::pai
 
 bool Controller::Pump()
 {
-	int oldScore = m_board->GetScoreValue();
-
 	// Pump more ooze into the board!
 	bool contained = m_board->Pump(GetCurrentOozePerPump());
 
-	// Ooze is still contained in the pipeline.
-	if (contained)
+	// Ooze spill! Game over regardless of score, unless the Stop tile was reached first.
+	if (!contained)
 	{
-		if ((oldScore < MIN_SCORE_TO_ADVANCE) &&
-			(m_board->GetScoreValue() >= MIN_SCORE_TO_ADVANCE))
-		{
-			// The player just gained enough points 
-			// to advance to the next level. Notify with a sound.
-			QueueSound(SOUND_NOTIFY);
-		}
-	}
-	
-	// Ooze spill! 
-	else
-	{
-		// Sound effect to trigger, depends on whether the player advanced to next level.
-		SoundID soundID(SOUND_GAME_OVER);
-		ScoreDetails details(GetScoreDetails());
-		if (details.advance)
-			soundID = SOUND_LEVEL_UP;
-
-		// Trigger sound effect.
+		SoundID soundID = m_board->IsVictory() ? SOUND_LEVEL_UP : SOUND_GAME_OVER;
 		QueueSound(soundID);
 
 		// This round is over.
@@ -227,10 +202,9 @@ Controller::ScoreDetails Controller::GetScoreDetails() const
 	// Add score gained to the cumulative score.
 	details.total = details.score + details.bonus + details.carryover;
 
-	// If score is high enough, or the ooze reached the Stop tile, score window
-	// offers a button to continue to next level.
+	// Score window only offers a button to continue to the next level once the Stop tile is reached.
 	details.level = m_difficultyLevel;
-	details.advance = (details.score >= MIN_SCORE_TO_ADVANCE) || m_board->IsVictory();
+	details.advance = m_board->IsVictory();
 
 	return details;
 }

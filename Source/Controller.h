@@ -97,13 +97,8 @@ public:
 		int carryover;	//< Cumulative score carried over from previous levels.
 		int total;		//< Sum of the cumulative, bonus, and last level scores.
 		int level;		//< Last difficulty level achieved.
-		bool advance;	//< True if score is high enough to advance to next level.
+		bool advance;	//< True if the Stop tile was reached, allowing advance to the next level.
 	};
-
-	/**
-	 * Points gained in one round, necessary to advance to the next difficulty level.
-	 */
-	static const int MIN_SCORE_TO_ADVANCE;
 
 	/**
 	 * Class destructor.
