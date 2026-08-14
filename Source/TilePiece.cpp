@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+Copyright (C) 2026 Bernardo Escalona. All Rights Reserved.
 
   This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
@@ -71,6 +71,10 @@ TilePiece* TilePiece::CreateTile(TilePiece::Type t)
 		case TYPE_START_S:
 		case TYPE_START_E:
 		case TYPE_START_W:
+		case TYPE_STOP_N:
+		case TYPE_STOP_S:
+		case TYPE_STOP_E:
+		case TYPE_STOP_W:
 		case TYPE_VERTICAL:
 		case TYPE_HORIZONTAL:
 		case TYPE_NW_ELBOW:
@@ -114,6 +118,21 @@ bool TilePiece::IsStart() const
 	return false;
 }
 
+bool TilePiece::IsStop() const
+{
+	switch (m_type)
+	{
+		case TYPE_STOP_N:
+		case TYPE_STOP_S:
+		case TYPE_STOP_E:
+		case TYPE_STOP_W:
+			return true;
+		default: break;
+	}
+
+	return false;
+}
+
 int TilePiece::GetScoreValue() const
 {
 	return 0;
@@ -130,22 +149,34 @@ Pipe::Pipe(TilePiece::Type t)
 	m_oozeLevel(0.0f),
 	m_exploding(0)
 {
-	// Starter pipes have only one possible
-	// flow direction. Set it from the start.
+	// Starter and stopper pipes have only one possible
+	// flow direction. Set it from the beginning.
 	switch (t)
 	{
-	case TYPE_START_N:
-		m_flowDirection = DIR_N;
-		break;
-	case TYPE_START_S:
-		m_flowDirection = DIR_S;
-		break;
-	case TYPE_START_E:
-		m_flowDirection = DIR_E;
-		break;
-	case TYPE_START_W:
-		m_flowDirection = DIR_W;
-		break;
+		case TYPE_START_N:
+			m_flowDirection = DIR_N;
+			break;
+		case TYPE_START_S:
+			m_flowDirection = DIR_S;
+			break;
+		case TYPE_START_E:
+			m_flowDirection = DIR_E;
+			break;
+		case TYPE_START_W:
+			m_flowDirection = DIR_W;
+			break;
+		case TYPE_STOP_N:
+			m_flowDirection = DIR_S;
+			break;
+		case TYPE_STOP_S:
+			m_flowDirection = DIR_N;
+			break;
+		case TYPE_STOP_E:
+			m_flowDirection = DIR_W;
+			break;
+		case TYPE_STOP_W:
+			m_flowDirection = DIR_E;
+			break;
 	default:
 		m_flowDirection = DIR_NONE;
 		break;
@@ -173,6 +204,9 @@ float Pipe::GetOozeLevel() const
 
 bool Pipe::IsFull() const
 {
+	if (IsStop())
+		return (m_oozeLevel >= MAX_OOZE_LEVEL / 2.0f);
+
 	return (m_oozeLevel >= MAX_OOZE_LEVEL);
 }
 
@@ -185,30 +219,38 @@ bool Pipe::HasOpening(Pipe::Direction dir) const
 {
 	switch (m_type)
 	{
-	case TYPE_START_N:
-		return (dir == DIR_N);
-	case TYPE_START_S:
-		return (dir == DIR_S);
-	case TYPE_START_E:
-		return (dir == DIR_E);
-	case TYPE_START_W:
-		return (dir == DIR_W);
-	case TYPE_VERTICAL:
-		return ((dir == DIR_N) || (dir == DIR_S));
-	case TYPE_HORIZONTAL:
-		return ((dir == DIR_E) || (dir == DIR_W));
-	case TYPE_NW_ELBOW:
-		return ((dir == DIR_N) || (dir == DIR_W));
-	case TYPE_NE_ELBOW:
-		return ((dir == DIR_N) || (dir == DIR_E));
-	case TYPE_SE_ELBOW:
-		return ((dir == DIR_S) || (dir == DIR_E));
-	case TYPE_SW_ELBOW:
-		return ((dir == DIR_S) || (dir == DIR_W));
-	case TYPE_CROSS:
-		return true;
-	default:
-		break;
+		case TYPE_START_N:
+			return (dir == DIR_N);
+		case TYPE_START_S:
+			return (dir == DIR_S);
+		case TYPE_START_E:
+			return (dir == DIR_E);
+		case TYPE_START_W:
+			return (dir == DIR_W);
+		case TYPE_STOP_N:
+			return (dir == DIR_N);
+		case TYPE_STOP_S:
+			return (dir == DIR_S);
+		case TYPE_STOP_E:
+			return (dir == DIR_E);
+		case TYPE_STOP_W:
+			return (dir == DIR_W);
+		case TYPE_VERTICAL:
+			return ((dir == DIR_N) || (dir == DIR_S));
+		case TYPE_HORIZONTAL:
+			return ((dir == DIR_E) || (dir == DIR_W));
+		case TYPE_NW_ELBOW:
+			return ((dir == DIR_N) || (dir == DIR_W));
+		case TYPE_NE_ELBOW:
+			return ((dir == DIR_N) || (dir == DIR_E));
+		case TYPE_SE_ELBOW:
+			return ((dir == DIR_S) || (dir == DIR_E));
+		case TYPE_SW_ELBOW:
+			return ((dir == DIR_S) || (dir == DIR_W));
+		case TYPE_CROSS:
+			return true;
+		default:
+			break;
 	}
 
 	return false;

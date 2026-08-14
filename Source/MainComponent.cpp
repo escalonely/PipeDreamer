@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+Copyright (C) 2026 Bernardo Escalona. All Rights Reserved.
 
   This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
@@ -462,6 +462,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 			switch (pipe->GetType())
 			{
 			case TilePiece::TYPE_START_N:
+			case TilePiece::TYPE_STOP_N:
 				{
 					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY(),
@@ -473,6 +474,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				break;
 
 			case TilePiece::TYPE_START_S:
+			case TilePiece::TYPE_STOP_S:
 				{
 					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY() + halfTile,
@@ -484,6 +486,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				break;
 
 			case TilePiece::TYPE_START_E:
+			case TilePiece::TYPE_STOP_E:
 				{
 					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY() + halfTile,
@@ -495,6 +498,7 @@ void MainComponent::DrawTile(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				break;
 
 			case TilePiece::TYPE_START_W:
+			case TilePiece::TYPE_STOP_W:
 				{
 					line = juce::Line<int>(	origin.getX() + halfTile,
 											origin.getY() + halfTile,

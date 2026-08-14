@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+Copyright (C) 2026 Bernardo Escalona. All Rights Reserved.
 
   This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
@@ -77,10 +77,24 @@ public:
 	 */
 	TilePiece* GetTile(int col, int row) const;
 
+	/**
+	 * Replace the tile at the given coordinates with a new tile of the given type.
+	 * The old tile will be deleted.
+	 * 
+	 * @param col	Column of tile to replace.
+	 * @param row	Row of tile to replace.
+	 * @param t		Type of new tile to place at the given coordinates.
+	 */
 	void ReplaceTile(int col, int row, TilePiece::Type t);
 
+	/**
+	 * Get the number of rows in the board.
+	 */
 	int GetNumRows() const;
 
+	/**
+	 * Get the number of columns in the board.
+	 */
 	int GetNumCols() const;
 
 	/**
@@ -101,8 +115,18 @@ public:
 	 */
 	void Reset();
 
-	void CreateRandomStart();
+	/**
+	 * Create random start and stop tiles on the board.
+	 */
+	void CreateRandomStartAndStop();
 
+	/**
+	 * Find the neighbor of the given tile in the given direction.
+	 * 
+	 * @param p		Tile whose neighbor is to be found.
+	 * @param d		Direction in which to look for a neighbor.
+	 * @return	The neighboring tile, or nullptr if no neighbor exists in that direction.
+	 */
 	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) /*const*/; // TODO: const deadlock
 
 	/**
@@ -152,7 +176,7 @@ private:
 	int m_numRows;
 
 	typedef std::pair<int, int> Coord;
-	std::map<Coord, TilePiece*> m_tileMap;
+	std::map<Coord, TilePiece*> m_tileMap; /**< Map of coordinates and tile pieces. */
 
 	int m_score;
 

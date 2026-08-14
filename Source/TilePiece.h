@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+Copyright (C) 2026 Bernardo Escalona. All Rights Reserved.
 
   This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
@@ -66,6 +66,10 @@ public:
 		TYPE_START_S,
 		TYPE_START_E,
 		TYPE_START_W,
+		TYPE_STOP_N,
+		TYPE_STOP_S,
+		TYPE_STOP_E,
+		TYPE_STOP_W,
 		TYPE_VERTICAL,
 		TYPE_HORIZONTAL,
 		TYPE_NW_ELBOW,
@@ -87,6 +91,8 @@ public:
 	Type GetType() const;
 
 	bool IsStart() const;
+
+	bool IsStop() const;
 
 	virtual int GetScoreValue() const;
 

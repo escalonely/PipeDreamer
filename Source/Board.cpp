@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 
-Copyright (C) 2021 Bernardo Escalona. All Rights Reserved.
+Copyright (C) 2026 Bernardo Escalona. All Rights Reserved.
 
   This file is part of Pipe Dreamer, found at:
   https://github.com/escalonely/PipeDreamer
@@ -78,7 +78,7 @@ void Board::Reset()
 	}
 
 	// Set random starting tile
-	CreateRandomStart();
+	CreateRandomStartAndStop();
 }
 
 TilePiece::Type Board::GetTileType(int col, int row) const
@@ -136,6 +136,13 @@ bool Board::Pump(float amount)
 		if (oozingPipe->IsFull())
 		{
 			m_score += oozingPipe->GetScoreValue();
+
+			if (oozingPipe->IsStop())
+			{
+				// Ooze flowing into a Stop tile. You won!
+				// TODO: implement victory
+				return false;
+			}
 
 			// Once this score reaches SCORE_FOR_FREE_BOMB, the number of available 
 			// bombs will increase by one. After that, the score until the next restored
@@ -229,29 +236,47 @@ int Board::GetScoreValue() const
 	return m_score;
 }
 
-void Board::CreateRandomStart()
+void Board::CreateRandomStartAndStop()
 {
 	// Determine a random position on the board.
 	Randomizer* rand = Randomizer::GetInstance();
-	int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows) - 1);
-	Coord startCoord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
 
-	TilePiece::Type starterType(TilePiece::TYPE_NONE);
+	Coord startCoord, stopCoord;
+	TilePiece::Type startTileType(TilePiece::TYPE_NONE);
+	TilePiece::Type stopTileType(TilePiece::TYPE_NONE);
+
 	bool search(true);
 	while (search)
 	{
-		// Get a random starter tile
-		starterType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_START_N, TilePiece::TYPE_START_W));
+		// Get a random start tile
+		int startPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows) - 1);
+		startCoord = Coord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
+		startTileType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_START_N, TilePiece::TYPE_START_W));
 
-		// Keep trying with random starter tiles until we find one which is not facing the wall.
-		search = (((startCoord.first <= 1) && (starterType == TilePiece::TYPE_START_W)) ||
-			((startCoord.first >= (m_numCols - 2)) && (starterType == TilePiece::TYPE_START_E)) ||
-			((startCoord.second <= 1) && (starterType == TilePiece::TYPE_START_N)) ||
-			((startCoord.second >= (m_numRows - 2)) && (starterType == TilePiece::TYPE_START_S)));
+		// Get a random stop tile
+		int stopPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows) - 1);
+		stopCoord = Coord(stopPosInt % m_numCols, static_cast<int>(stopPosInt / m_numCols));
+		stopTileType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_STOP_N, TilePiece::TYPE_STOP_W));
+
+		// Keep trying with random start tiles until we find one which is not facing the wall.
+		search &= (((startCoord.first <= 1) && (startTileType == TilePiece::TYPE_START_W)) ||
+			((startCoord.first >= (m_numCols - 2)) && (startTileType == TilePiece::TYPE_START_E)) ||
+			((startCoord.second <= 1) && (startTileType == TilePiece::TYPE_START_N)) ||
+			((startCoord.second >= (m_numRows - 2)) && (startTileType == TilePiece::TYPE_START_S)));
+
+		// Keep trying with random stop tiles until we find one which is not facing the wall.
+		search &= (((stopCoord.first <= 1) && (stopTileType == TilePiece::TYPE_STOP_W)) ||
+			((stopCoord.first >= (m_numCols - 2)) && (stopTileType == TilePiece::TYPE_STOP_E)) ||
+			((stopCoord.second <= 1) && (stopTileType == TilePiece::TYPE_STOP_N)) ||
+			((stopCoord.second >= (m_numRows - 2)) && (stopTileType == TilePiece::TYPE_STOP_S)));
+
+		// TODO: also ensure start & stop are not facing each other
 	}
 
-	// Set starter tile.
-	ReplaceTile(startCoord.first, startCoord.second, starterType);
+	// Set start and stop tiles.
+	ReplaceTile(startCoord.first, startCoord.second, startTileType);
+	ReplaceTile(stopCoord.first, stopCoord.second, stopTileType);
+
 	m_oozingTile = m_tileMap[startCoord];
 }
 
