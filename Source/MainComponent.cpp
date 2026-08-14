@@ -1154,6 +1154,9 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 		Pipe* pipe = dynamic_cast<Pipe*>(tile);
 		if (pipe != nullptr)
 		{
+			if (pipe->IsStart() || pipe->IsStop())
+				DrawStartStopMarker(pipe, origin, g);
+
 			// If this tile has an explosion on it, draw it.
 			int exp = pipe->PopExplosion();
 			if (exp > 0)
@@ -1170,6 +1173,55 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 				g.fillPath(starPath);
 			}
 		}
+	}
+}
+
+void MainComponent::DrawStartStopMarker(Pipe* pipe, juce::Point<int> origin, juce::Graphics& g)
+{
+	int halfTile = m_tileSize / 2;
+
+	// The marker sits right on top of the tile's opening, at the edge facing its pipe direction.
+	juce::Point<int> port(origin.getX() + halfTile, origin.getY() + halfTile);
+	switch (pipe->GetType())
+	{
+		case TilePiece::TYPE_START_N:
+		case TilePiece::TYPE_STOP_N:
+			port = juce::Point<int>(origin.getX() + halfTile, origin.getY());
+			break;
+		case TilePiece::TYPE_START_S:
+		case TilePiece::TYPE_STOP_S:
+			port = juce::Point<int>(origin.getX() + halfTile, origin.getY() + m_tileSize);
+			break;
+		case TilePiece::TYPE_START_E:
+		case TilePiece::TYPE_STOP_E:
+			port = juce::Point<int>(origin.getX() + m_tileSize, origin.getY() + halfTile);
+			break;
+		case TilePiece::TYPE_START_W:
+		case TilePiece::TYPE_STOP_W:
+			port = juce::Point<int>(origin.getX(), origin.getY() + halfTile);
+			break;
+		default:
+			break;
+	}
+
+	float markerSize = m_tileSize / 5.0f;
+	juce::Rectangle<float> markerRect(	port.getX() - markerSize / 2.0f,
+										port.getY() - markerSize / 2.0f,
+										markerSize, markerSize);
+
+	if (pipe->IsStart())
+	{
+		// Spout: plain white dot where the ooze emerges.
+		g.setColour(juce::Colours::white);
+		g.fillEllipse(markerRect);
+	}
+	else
+	{
+		// Goal: little gold bullseye marking the finish.
+		g.setColour(juce::Colours::black);
+		g.fillEllipse(markerRect.expanded(1.5f));
+		g.setColour(juce::Colours::gold);
+		g.fillEllipse(markerRect);
 	}
 }
 

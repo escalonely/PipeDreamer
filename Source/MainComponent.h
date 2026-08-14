@@ -36,6 +36,7 @@ SOFTWARE.
 // ---- Forward declarations ----
 
 class TilePiece;
+class Pipe;
 class ScoreWindow;
 
 
@@ -171,6 +172,17 @@ public:
 	 * @param g			The graphics context used for drawing.
 	 */
 	void DrawTileDecoration(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
+
+	/**
+	 * Draw a small marker on the opening of a start or stop tile, so the two are easy to
+	 * tell apart at a glance: a plain dot for the start's spout, a gold bullseye for the stop's goal.
+	 *
+	 * @param pipe		The start or stop pipe to mark. No-op for any other tile type.
+	 * @param origin	The point on the MainComponent window where the top-left corner
+	 *					of the tile being drawn will be located.
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawStartStopMarker(Pipe* pipe, juce::Point<int> origin, juce::Graphics& g);
 
 	/**
 	 * Draw ooze spill next to the last pipe on the pipeline.
