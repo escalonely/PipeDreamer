@@ -187,7 +187,7 @@ bool Board::Pump(float amount)
 	return ret;
 }
 
-TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
+TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) const
 {
 	TilePiece* ret(nullptr);
 
@@ -225,7 +225,7 @@ TilePiece* Board::FindNeighbor(TilePiece* tile, Pipe::Direction dir) /*const*/
 	if ((coord.first >= 0) && (coord.first < m_numCols) &&
 		(coord.second >= 0) && (coord.second < m_numRows))
 	{
-		ret = m_tileMap[coord];
+		ret = m_tileMap.at(coord);
 	}
 
 	return ret;

@@ -127,7 +127,7 @@ public:
 	 * @param d		Direction in which to look for a neighbor.
 	 * @return	The neighboring tile, or nullptr if no neighbor exists in that direction.
 	 */
-	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) /*const*/; // TODO: const deadlock
+	TilePiece* FindNeighbor(TilePiece* p, Pipe::Direction d) const;
 
 	/**
 	 * Get the score gained so far in this round.
