@@ -442,7 +442,7 @@ Cross::Cross()
 	m_vertWayFree(true)
 {
 	// Randomly determine whether the horizontal component of the cross should go on the
-	// foreground, of the vertical one. This is just for cosmetic flavor.
+	// foreground, or the vertical one. This is just for cosmetic flavor.
 	Randomizer* rand = Randomizer::GetInstance();
 	m_backgroundWay = static_cast<Way>(rand->GetWithinRange(WAY_VERTICAL, WAY_HORIZONTAL));
 }
