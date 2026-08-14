@@ -302,14 +302,14 @@ juce::Font MainComponent::GetFont(LabelID labelID) const
 	switch (labelID)
 	{
 		case LABEL_VERSION:
-			return juce::Font("consolas", (minDimension * 18.0f / 620.0f), juce::Font::plain);
+			return juce::Font(juce::FontOptions("consolas", (minDimension * 18.0f / 620.0f), juce::Font::plain));
 		case LABEL_SCORE:
-			return juce::Font("consolas", (minDimension * 32.0f / 620.0f), juce::Font::plain);
+			return juce::Font(juce::FontOptions("consolas", (minDimension * 32.0f / 620.0f), juce::Font::plain));
 		case LABEL_BSCORE:
-			return juce::Font("consolas", (minDimension * 32.0f / 620.0f), juce::Font::bold);
+			return juce::Font(juce::FontOptions("consolas", (minDimension * 32.0f / 620.0f), juce::Font::bold));
 	}
 
-	return juce::Font();
+	return juce::Font(juce::FontOptions());
 }
 
 void MainComponent::paint(juce::Graphics& g)

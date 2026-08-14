@@ -103,7 +103,7 @@ void ScoreWindow::paint(juce::Graphics& g)
 		messageText << "Total: " << juce::String(m_details.total);
 
 	// Display score
-	g.setFont(juce::Font("consolas", 32.0f, juce::Font::plain));
+	g.setFont(juce::Font(juce::FontOptions("consolas", 32.0f, juce::Font::plain)));
 	g.setColour(juce::Colours::grey);
 	juce::Rectangle<int> subRect(m_messageBoxRect.getX() + 5, m_messageBoxRect.getY() + 5, m_messageBoxRect.getWidth() - 10, buttonHeight * 3);
 	g.drawFittedText(messageText, subRect, juce::Justification::centred, true);
@@ -214,7 +214,7 @@ void HighScoreWindow::RefreshCachedScore(std::vector<scoreEntry>& scoreHash)
 			m_nameEditor->setCaretVisible(true);
 			juce::String filter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890.-");
 			m_nameEditor->setInputRestrictions(8, filter);
-			m_nameEditor->setFont(juce::Font("consolas", 25.0f, juce::Font::bold)); // TODO fontsize const
+			m_nameEditor->setFont(juce::Font(juce::FontOptions("consolas", 25.0f, juce::Font::bold))); // TODO fontsize const
 			m_nameEditor->setColour(juce::TextEditor::backgroundColourId, juce::Colours::black);
 			m_nameEditor->setColour(juce::TextEditor::textColourId, juce::Colours::yellow);
 			m_nameEditor->setColour(juce::TextEditor::outlineColourId, juce::Colours::yellow);
@@ -282,7 +282,7 @@ void HighScoreWindow::paint(juce::Graphics& g)
 
 	// Title
 	g.setColour(juce::Colours::grey);
-	g.setFont(juce::Font("consolas", 32.0f, juce::Font::bold));
+	g.setFont(juce::Font(juce::FontOptions("consolas", 32.0f, juce::Font::bold)));
 	g.drawText("High Score", juce::Rectangle<int>(tileSize + 320 - 2, tileSize + 10, rectWidth, 60), juce::Justification::centred);
 
 	int vPos = tileSize + 80;
@@ -294,12 +294,12 @@ void HighScoreWindow::paint(juce::Graphics& g)
 	int scoreWidth = 100;
 	int dateWidth = 130;
 	float fontSize = 25.0f; // TODO const
-	g.setFont(juce::Font("consolas", 25.0f, juce::Font::plain));
+	g.setFont(juce::Font(juce::FontOptions("consolas", 25.0f, juce::Font::plain)));
 
 	for (int i = 0; i < m_nameCache.size(); i++)
 	{
 		// Draw player name, OR position the TextEditor used to enter the players name
-		g.setFont(juce::Font("consolas", fontSize, juce::Font::bold));
+		g.setFont(juce::Font(juce::FontOptions("consolas", fontSize, juce::Font::bold)));
 		if (m_nameCache[i] == "placeholder")
 			m_nameEditor->setBounds(juce::Rectangle<int>(hPosName, vPos, nameWidth, fieldHeight));
 		else
@@ -313,7 +313,7 @@ void HighScoreWindow::paint(juce::Graphics& g)
 		//g.drawRect(juce::Rectangle<int>(hPosScore, vPos, scoreWidth, fieldHeight));
 
 		// Draw date
-		g.setFont(juce::Font("consolas", fontSize, juce::Font::plain));
+		g.setFont(juce::Font(juce::FontOptions("consolas", fontSize, juce::Font::plain)));
 		g.drawText(juce::String(m_dateCache[i]), juce::Rectangle<int>(hPosDate, vPos, dateWidth, fieldHeight), juce::Justification::right, false);
 		//g.drawRect(juce::Rectangle<int>(hPosDate, vPos, dateWidth, fieldHeight));
 
