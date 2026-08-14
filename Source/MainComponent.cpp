@@ -702,6 +702,56 @@ void MainComponent::DrawOoze(TilePiece* tile, juce::Point<int> origin, juce::Gra
 				}
 				break;
 
+			// Ooze entering a Stop tile keeps flowing from the opening towards the
+			// center, where the round ends once it's reached (see Pipe::IsFull()).
+			case TilePiece::TYPE_STOP_N:
+				{
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY(),
+											origin.getX() + halfTile,
+											origin.getY() + fill);
+					g.drawLine(line.toFloat(), OOZE_THICKNESS);
+					if (overHalf)
+						g.fillEllipse(elbowJoint);
+				}
+				break;
+
+			case TilePiece::TYPE_STOP_S:
+				{
+					line = juce::Line<int>(	origin.getX() + halfTile,
+											origin.getY() + m_tileSize,
+											origin.getX() + halfTile,
+											origin.getY() + m_tileSize - fill);
+					g.drawLine(line.toFloat(), OOZE_THICKNESS);
+					if (overHalf)
+						g.fillEllipse(elbowJoint);
+				}
+				break;
+
+			case TilePiece::TYPE_STOP_E:
+				{
+					line = juce::Line<int>(	origin.getX() + m_tileSize,
+											origin.getY() + halfTile,
+											origin.getX() + m_tileSize - fill,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), OOZE_THICKNESS);
+					if (overHalf)
+						g.fillEllipse(elbowJoint);
+				}
+				break;
+
+			case TilePiece::TYPE_STOP_W:
+				{
+					line = juce::Line<int>(	origin.getX(),
+											origin.getY() + halfTile,
+											origin.getX() + fill,
+											origin.getY() + halfTile);
+					g.drawLine(line.toFloat(), OOZE_THICKNESS);
+					if (overHalf)
+						g.fillEllipse(elbowJoint);
+				}
+				break;
+
 			case TilePiece::TYPE_VERTICAL:
 				{
 					if (pipe->GetFlowDirection() == Pipe::DIR_N)
@@ -1222,42 +1272,47 @@ void MainComponent::DrawStartStopMarker(Pipe* pipe, juce::Point<int> origin, juc
 
 void MainComponent::DrawSpill(juce::Point<int> origin, juce::Graphics& g)
 {
-	if (Controller::GetInstance()->GetState() == Controller::STATE_STOPPED)
-	{
-		Pipe* oozingPipe = dynamic_cast<Pipe*>(Controller::GetInstance()->GetBoard()->GetOozingTile());
-		if (oozingPipe != nullptr)
-		{
-			int halfTile = m_tileSize / 2;
-			int qt(m_tileSize / 4);
-			Pipe::Direction spillDir = oozingPipe->GetFlowDirection();
-			juce::Rectangle<int> bigRec;
-			juce::Rectangle<int> smlRec;
-			switch (spillDir)
-			{
-			case Pipe::DIR_N:
-				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() - m_tileSize, m_tileSize, m_tileSize);
-				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() - halfTile, halfTile, halfTile);
-				break;
-			case Pipe::DIR_S:
-				bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() + m_tileSize, m_tileSize, m_tileSize);
-				smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() + m_tileSize, halfTile, halfTile);
-				break;
-			case Pipe::DIR_E:
-				bigRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY(), m_tileSize, m_tileSize);
-				smlRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY() + qt, halfTile, halfTile);
-				break;
-			case Pipe::DIR_W:
-				bigRec = juce::Rectangle<int>(origin.getX() - m_tileSize, origin.getY(), m_tileSize, m_tileSize);
-				smlRec = juce::Rectangle<int>(origin.getX() - halfTile, origin.getY() + qt, halfTile, halfTile);
-				break;
-			}
+	auto controller = Controller::GetInstance();
+	if (!controller || controller->GetState() != Controller::STATE_STOPPED)
+		return;
 
-			g.setColour(juce::Colour(0x88008000)); // transparent green
-			g.fillEllipse(bigRec.toFloat());
-			g.setColour(juce::Colours::limegreen);
-			g.fillEllipse(smlRec.toFloat());
-		}
+	const auto board = controller->GetBoard();
+	if (!board || board->IsVictory())
+		return;
+
+	Pipe* oozingPipe = dynamic_cast<Pipe*>(board->GetOozingTile());
+	if (oozingPipe == nullptr)
+		return;
+
+	int halfTile = m_tileSize / 2;
+	int qt(m_tileSize / 4);
+	Pipe::Direction spillDir = oozingPipe->GetFlowDirection();
+	juce::Rectangle<int> bigRec;
+	juce::Rectangle<int> smlRec;
+	switch (spillDir)
+	{
+		case Pipe::DIR_N:
+			bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() - m_tileSize, m_tileSize, m_tileSize);
+			smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() - halfTile, halfTile, halfTile);
+			break;
+		case Pipe::DIR_S:
+			bigRec = juce::Rectangle<int>(origin.getX(), origin.getY() + m_tileSize, m_tileSize, m_tileSize);
+			smlRec = juce::Rectangle<int>(origin.getX() + qt, origin.getY() + m_tileSize, halfTile, halfTile);
+			break;
+		case Pipe::DIR_E:
+			bigRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY(), m_tileSize, m_tileSize);
+			smlRec = juce::Rectangle<int>(origin.getX() + m_tileSize, origin.getY() + qt, halfTile, halfTile);
+			break;
+		case Pipe::DIR_W:
+			bigRec = juce::Rectangle<int>(origin.getX() - m_tileSize, origin.getY(), m_tileSize, m_tileSize);
+			smlRec = juce::Rectangle<int>(origin.getX() - halfTile, origin.getY() + qt, halfTile, halfTile);
+			break;
 	}
+
+	g.setColour(juce::Colour(0x88008000)); // transparent green
+	g.fillEllipse(bigRec.toFloat());
+	g.setColour(juce::Colours::limegreen);
+	g.fillEllipse(smlRec.toFloat());
 }
 
 void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)

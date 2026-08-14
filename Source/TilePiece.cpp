@@ -204,6 +204,8 @@ float Pipe::GetOozeLevel() const
 
 bool Pipe::IsFull() const
 {
+	// A Stop tile's pipe only spans from its opening to the center of the tile,
+	// i.e. half the length of a regular pipe, so it fills up twice as fast.
 	if (IsStop())
 		return (m_oozeLevel >= MAX_OOZE_LEVEL / 2.0f);
 
@@ -369,6 +371,14 @@ bool Pipe::SetFlowEntry(Pipe::Direction dir)
 
 		case TYPE_CROSS:
 			assert(false); 
+			break;
+
+		case TYPE_STOP_N:
+		case TYPE_STOP_S:
+		case TYPE_STOP_E:
+		case TYPE_STOP_W:
+			// Flow direction is already fixed since construction, just accept the ooze.
+			ret = true;
 			break;
 
 		default:
