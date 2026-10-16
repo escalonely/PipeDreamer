@@ -34,9 +34,6 @@ SOFTWARE.
 
 // ---- Helper types and constants ----
 
-const int Board::MAX_NUM_BOMBS(5);
-const int Board::SCORE_FOR_FREE_BOMB(50);
-
 
 // ---- Class Implementation ----
 
@@ -62,8 +59,6 @@ Board::~Board()
 void Board::Reset()
 {
 	m_score = 0;
-	m_scoreUntilFreeBomb = 0;
-	m_numBombs = MAX_NUM_BOMBS;
 	m_victory = false;
 
 	// Fill the board with (empty) tiles.
@@ -101,19 +96,8 @@ void Board::ReplaceTile(int col, int row, TilePiece::Type t)
 {
 	Coord c(col, row);
 
-	// If the old tile wasn't empty (was a pipe), we mark the replacement tile
-	// so that an explosion graphic can be drawn over it.
-	bool explode = (m_tileMap[c]->GetType() != TilePiece::TYPE_NONE);
-
 	delete m_tileMap[c];
 	m_tileMap[c] = TilePiece::CreateTile(t);
-
-	if (explode)
-	{
-		Pipe* pipe = dynamic_cast<Pipe*>(m_tileMap[c]);
-		if (pipe != nullptr)
-			pipe->Explode();
-	}
 }
 
 int Board::GetNumCols() const
@@ -143,18 +127,6 @@ bool Board::Pump(float amount)
 				// Ooze flowing into a Stop tile. You won!
 				m_victory = true;
 				return false;
-			}
-
-			// Once this score reaches SCORE_FOR_FREE_BOMB, the number of available 
-			// bombs will increase by one. After that, the score until the next restored
-			// bomb will be 0 again.
-			m_scoreUntilFreeBomb += oozingPipe->GetScoreValue();
-			if (m_scoreUntilFreeBomb >= SCORE_FOR_FREE_BOMB)
-			{
-				if (m_numBombs < MAX_NUM_BOMBS)
-					m_numBombs++;
-
-				m_scoreUntilFreeBomb = 0;
 			}
 
 			Pipe::Direction outFlowDir = oozingPipe->GetFlowDirection();
@@ -269,25 +241,4 @@ void Board::CreateRandomStart()
 	ReplaceTile(startCoord.first, startCoord.second, startTileType);
 
 	m_oozingTile = m_tileMap[startCoord];
-}
-
-int Board::GetNumBombs() const
-{
-	return m_numBombs;
-}
-
-bool Board::PopBomb()
-{
-	if (m_numBombs > 0)
-	{
-		m_numBombs--;
-		return true;
-	}
-
-	return false;
-}
-
-int Board::GetPercentUntilFreeBomb()
-{
-	return static_cast<int>((m_scoreUntilFreeBomb * 100) / SCORE_FOR_FREE_BOMB);
 }

@@ -164,7 +164,7 @@ public:
 	void DrawCrossSecondWay(TilePiece* tile, juce::Point<int> origin, juce::Graphics& g);
 
 	/**
-	 * Draw a tile piece's decoration elements, such as frame and explosion graphics.
+	 * Draw a tile piece's decoration elements, such as its frame.
 	 *
 	 * @param tile		The tile piece to draw the decorations for.
 	 * @param origin	The point on the MainComponent window where the top-left corner
@@ -200,14 +200,6 @@ public:
 	 * @param g			The graphics context used for drawing.
 	 */
 	void DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g);
-
-	/**
-	 * Draw the bombs next to the board, used to replace pipe tiles.
-	 *
-	 * @param origin	The point on the MainComponent window to use as origin.
-	 * @param g			The graphics context used for drawing.
-	 */
-	void DrawBombs(juce::Point<int> origin, juce::Graphics& g);
 
 	/**
 	 * Draw the fast-forward button. 

@@ -146,8 +146,7 @@ int TilePiece::GetScoreValue() const
 
 Pipe::Pipe(TilePiece::Type t)
 	: TilePiece(t),
-	m_oozeLevel(0.0f),
-	m_exploding(0)
+	m_oozeLevel(0.0f)
 {
 	// Starter and stopper pipes have only one possible
 	// flow direction. Set it from the beginning.
@@ -392,22 +391,6 @@ bool Pipe::SetFlowEntry(Pipe::Direction dir)
 Pipe::Direction Pipe::GetFlowDirection() const
 {
 	return m_flowDirection;
-}
-
-void Pipe::Explode()
-{
-	// Duration of a tile explosion, in number of frames.
-	static constexpr int maximumExplosiveness = 8;
-
-	m_exploding = maximumExplosiveness;
-}
-
-int Pipe::PopExplosion()
-{
-	if (m_exploding > 0)
-		m_exploding--;
-
-	return m_exploding;
 }
 
 int Pipe::GetScoreValue() const

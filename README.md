@@ -32,12 +32,6 @@ The objective of PipeDreamer is to build a **Pipeline** that will allow the gree
 * After the **Ooze** starts pouring out, the **Ooze-Meter** will slowly become empty again.
 * If you manage to contain the **Ooze** inside the pipeline until the **Ooze-Meter** is completely depleted, you will advance to the **Next Level**!
 
-### Bombs
-
-* **Bombs** can be expended to replace existing **Pipes** on the **Grid**.
-* Once all **Bombs** have been used, **Pipes** can only be placed on empty cells.
-* With time, consumed **Bombs** will slowly regenerate.
-
 ### Score
 
 * You gain points for each **Pipe** through which the **Ooze** successfully flows.

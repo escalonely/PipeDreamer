@@ -44,16 +44,6 @@ class Board
 {
 public:
 	/**
-	 * Max number of bombs available per round, used to replace existing pipe tiles.
-	 */
-	static const int MAX_NUM_BOMBS;
-
-	/**
-	 * Score points required to restore a used up bomb.
-	 */
-	static const int SCORE_FOR_FREE_BOMB;
-
-	/**
 	 * Class constructor.
 	 */
 	Board(int numCols, int numRows);
@@ -116,7 +106,7 @@ public:
 	bool IsVictory() const;
 
 	/**
-	 * Resets score, bombs, clears all tiles, and repositions starting tile
+	 * Resets score, clears all tiles, and repositions starting tile
 	 * to a random position.
 	 */
 	void Reset();
@@ -143,31 +133,6 @@ public:
 	int GetScoreValue() const;
 
 	/**
-	 * Get the number of bombs still available this round.
-	 * Bombs are used to replace existing pipe tiles on the grid.
-	 *
-	 * @return	Number of bombs available.
-	 */
-	int GetNumBombs() const;
-
-	/**
-	 * Expend one of the available bombs, if available.
-	 * The number of available bombs will be reduced by one.
-	 *
-	 * @return	True if at least one bomb was available prior to this call.
-	 */
-	bool PopBomb();
-
-	/**
-	 * Get the score gained so far, until one of the expended bombs is restored, in percent.
-	 * Once this reaches 100, the number of available bombs will increase by one.
-	 * After that, the score until the next restored bomb will be 0 again.
-	 *
-	 * @return	Score until next restored bomb, in percent.
-	 */
-	int GetPercentUntilFreeBomb();
-
-	/**
 	 * Get the pipe on the board, in which the ooze level is currently increasing.
 	 */
 	TilePiece* GetOozingTile() const;
@@ -190,12 +155,4 @@ private:
 	std::map<Coord, TilePiece*> m_tileMap; /**< Map of coordinates and tile pieces. */
 
 	int m_score;
-
-	int m_numBombs;
-
-	/**
-	 * Score points until an used up bomb will be restored.
-	 * Once SCORE_FOR_FREE_BOMB is reached, this counter is set back to 0.
-	 */
-	int m_scoreUntilFreeBomb;
 };

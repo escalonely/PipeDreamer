@@ -143,10 +143,6 @@ public:
 
 	virtual Pipe::Direction GetFlowDirection() const;
 
-	void Explode();
-
-	int PopExplosion();
-
 	int GetScoreValue() const override;
 
 protected:
@@ -154,11 +150,6 @@ protected:
 	 * Indicates how full of Ooze the pipe is. The value is between MIN_OOZE_LEVEL and MAX_OOZE_LEVEL.
 	 */
 	float m_oozeLevel;
-
-	/**
-	 * Indicates whether the pipe is currently exploding. The value is greater than 0 if the pipe is exploding, and 0 otherwise.
-	 */
-	int m_exploding;
 
 	/**
 	 * Direction in which the Ooze is currently flowing through the pipe.

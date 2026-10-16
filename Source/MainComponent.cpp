@@ -187,32 +187,14 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 													m_tileSize, m_tileSize);
 					if (tileRect.contains(clickPos))
 					{
-						// Default sound effect for placing pipes on the grid.
-						Controller::SoundID soundID(Controller::SOUND_CLICK);
-
+						// Clicking on an already placed tile does nothing.
 						TilePiece* clickedTile = board->GetTile(i, j);
 						replace = (clickedTile->GetType() == TilePiece::TYPE_NONE);
-
-						if (!replace)
-						{
-							Pipe* clickedPipe = dynamic_cast<Pipe*>(clickedTile);
-							if ((clickedPipe != nullptr) &&
-								(clickedPipe->IsEmpty()) &&		// Only empty tiles can be replaced.
-								(!clickedPipe->IsStart()) &&	// Cannot replace starter tiles.
-								(!clickedPipe->IsStop()) &&		// Cannot replace stopper tiles.
-								(board->PopBomb()))				// Need bombs to replace existing pipe tiles.
-							{
-								replace = true;
-
-								// Sound effect should be explosive instead.
-								soundID = Controller::SOUND_EXPLODE;
-							}
-						}
 
 						if (replace)
 						{
 							// Trigger approproate sound effect.
-							Controller::GetInstance()->QueueSound(soundID);
+							Controller::GetInstance()->QueueSound(Controller::SOUND_CLICK);
 
 							// Grab the next piece in the queue, and...
 							TilePiece::Type newType = controller->GetQueue()->Pop();
@@ -346,9 +328,6 @@ void MainComponent::paint(juce::Graphics& g)
 		//textRect = juce::Rectangle<int>(getLocalBounds().getWidth() - 380, getLocalBounds().getHeight() - 50, 350, 40);
 		//g.drawRect(textRect, 1);
 	}
-
-	// Draw bombs
-	DrawBombs(juce::Point<int>(static_cast<int>(getLocalBounds().getWidth() / 1.6749f), 20), g);
 
 	// Draw button to accelerate game speed.
 	DrawFastForwardButton(g);
@@ -1201,22 +1180,6 @@ void MainComponent::DrawTileDecoration(TilePiece* tile, juce::Point<int> origin,
 		{
 			if (pipe->IsStart() || pipe->IsStop())
 				DrawStartStopMarker(pipe, origin, g);
-
-			// If this tile has an explosion on it, draw it.
-			int exp = pipe->PopExplosion();
-			if (exp > 0)
-			{
-				juce::Path starPath;
-				int halfTile = m_tileSize / 2;
-				starPath.addStar(juce::Point<float>(static_cast<float>(	origin.getX() + halfTile),
-																		static_cast<float>(origin.getY() + halfTile)),
-																		7,								// Number of peaks
-																		static_cast<float>(exp * 4),	// Inner radius
-																		static_cast<float>(exp * 8),	// Outer radius
-																		static_cast<float>(exp * 2));	// Rotation angle
-				g.setColour(juce::Colours::orangered);
-				g.fillPath(starPath);
-			}
 		}
 	}
 }
@@ -1368,32 +1331,6 @@ void MainComponent::DrawOozeMeter(juce::Point<int> origin, juce::Graphics& g)
 	g.drawLine(origin.getX() + 10.0f, origin.getY() + vialHeight * 0.5f,	origin.getX() + 22.0f,	origin.getY() + vialHeight * 0.5f,	1.0f);
 	g.drawLine(origin.getX() + 15.0f, origin.getY() + vialHeight * 0.75f,	origin.getX() + 22.0f,	origin.getY() + vialHeight * 0.75f,	1.0f);
 	g.drawRect(vialRect);
-}
-
-void MainComponent::DrawBombs(juce::Point<int> p, juce::Graphics& g)
-{
-	Board* board(Controller::GetInstance()->GetBoard());
-	int halfTile = m_tileSize / 2;
-
-	for (int i = 0; i < Board::MAX_NUM_BOMBS; i++)
-	{
-		// Draw the bombs that are still available
-		if (i < board->GetNumBombs())
-		{
-			g.setColour(juce::Colours::red);
-			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat());
-		}
-
-		// Draw the one used up bomb, which will soon become available again.
-		else if (i == board->GetNumBombs())
-		{
-			g.setColour(juce::Colour(static_cast<juce::uint8>(67 + board->GetPercentUntilFreeBomb()), 67, 67));
-			g.fillEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat());
-		}
-
-		g.setColour(juce::Colours::white);
-		g.drawEllipse(juce::Rectangle<int>(p.getX() + i * (m_tileSize - 1), p.getY(), halfTile, halfTile).toFloat(), 1.0f);
-	}
 }
 
 void MainComponent::DrawFastForwardButton(juce::Graphics& g)
