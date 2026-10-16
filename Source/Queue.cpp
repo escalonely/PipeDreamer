@@ -106,3 +106,14 @@ TilePiece::Type Queue::Pop()
 
 	return currentType;
 }
+
+void Queue::AddRandomStopTile()
+{
+	Randomizer* rand = Randomizer::GetInstance();
+	TilePiece::Type t(static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_STOP_N, TilePiece::TYPE_STOP_W)));
+
+	// Replace the slot at the back of the queue, i.e. the last one due to be played.
+	int backIdx = (m_readPos + static_cast<int>(m_buff.size()) - 1) % static_cast<int>(m_buff.size());
+	delete m_buff[backIdx];
+	m_buff[backIdx] = dynamic_cast<Pipe*>(TilePiece::CreateTile(t));
+}

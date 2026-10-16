@@ -122,9 +122,9 @@ public:
 	void Reset();
 
 	/**
-	 * Create random start and stop tiles on the board.
+	 * Create a random Start tile on the board.
 	 */
-	void CreateRandomStartAndStop();
+	void CreateRandomStart();
 
 	/**
 	 * Find the neighbor of the given tile in the given direction.

@@ -79,7 +79,7 @@ void Board::Reset()
 	}
 
 	// Set random starting tile
-	CreateRandomStartAndStop();
+	CreateRandomStart();
 }
 
 TilePiece::Type Board::GetTileType(int col, int row) const
@@ -242,14 +242,13 @@ bool Board::IsVictory() const
 	return m_victory;
 }
 
-void Board::CreateRandomStartAndStop()
+void Board::CreateRandomStart()
 {
 	// Determine a random position on the board.
 	Randomizer* rand = Randomizer::GetInstance();
 
-	Coord startCoord, stopCoord;
+	Coord startCoord;
 	TilePiece::Type startTileType(TilePiece::TYPE_NONE);
-	TilePiece::Type stopTileType(TilePiece::TYPE_NONE);
 
 	bool search(true);
 	while (search)
@@ -259,40 +258,15 @@ void Board::CreateRandomStartAndStop()
 		startCoord = Coord(startPosInt % m_numCols, static_cast<int>(startPosInt / m_numCols));
 		startTileType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_START_N, TilePiece::TYPE_START_W));
 
-		// Get a random stop tile
-		int stopPosInt = rand->GetWithinRange(0, (m_numCols * m_numRows) - 1);
-		stopCoord = Coord(stopPosInt % m_numCols, static_cast<int>(stopPosInt / m_numCols));
-		stopTileType = static_cast<TilePiece::Type>(rand->GetWithinRange(TilePiece::TYPE_STOP_N, TilePiece::TYPE_STOP_W));
-
-		// True if the start tile would ooze directly into the wall.
-		bool startFacesWall = (((startCoord.first <= 1) && (startTileType == TilePiece::TYPE_START_W)) ||
+		// Keep trying with random start tiles until we find one which is not facing the wall.
+		search = (((startCoord.first <= 1) && (startTileType == TilePiece::TYPE_START_W)) ||
 			((startCoord.first >= (m_numCols - 2)) && (startTileType == TilePiece::TYPE_START_E)) ||
 			((startCoord.second <= 1) && (startTileType == TilePiece::TYPE_START_N)) ||
 			((startCoord.second >= (m_numRows - 2)) && (startTileType == TilePiece::TYPE_START_S)));
-
-		// True if the stop tile is directly facing the wall.
-		bool stopFacesWall = (((stopCoord.first <= 1) && (stopTileType == TilePiece::TYPE_STOP_W)) ||
-			((stopCoord.first >= (m_numCols - 2)) && (stopTileType == TilePiece::TYPE_STOP_E)) ||
-			((stopCoord.second <= 1) && (stopTileType == TilePiece::TYPE_STOP_N)) ||
-			((stopCoord.second >= (m_numRows - 2)) && (stopTileType == TilePiece::TYPE_STOP_S)));
-
-		// True if start and stop are neighboring tiles facing each other, so the ooze would
-		// flow directly out of the start tile into the stop tile (instant win :D).
-		int colDelta = stopCoord.first - startCoord.first;
-		int rowDelta = stopCoord.second - startCoord.second;
-		bool startFacesStop =
-			((startTileType == TilePiece::TYPE_START_N) && (colDelta == 0) && (rowDelta == -1) && (stopTileType == TilePiece::TYPE_STOP_S)) ||
-			((startTileType == TilePiece::TYPE_START_S) && (colDelta == 0) && (rowDelta == 1) && (stopTileType == TilePiece::TYPE_STOP_N)) ||
-			((startTileType == TilePiece::TYPE_START_E) && (colDelta == 1) && (rowDelta == 0) && (stopTileType == TilePiece::TYPE_STOP_W)) ||
-			((startTileType == TilePiece::TYPE_START_W) && (colDelta == -1) && (rowDelta == 0) && (stopTileType == TilePiece::TYPE_STOP_E));
-
-		// Keep trying with random start/stop tiles until neither faces the wall and they don't face each other.
-		search = (startFacesWall || stopFacesWall || startFacesStop);
 	}
 
-	// Set start and stop tiles.
+	// Set start tile.
 	ReplaceTile(startCoord.first, startCoord.second, startTileType);
-	ReplaceTile(stopCoord.first, stopCoord.second, stopTileType);
 
 	m_oozingTile = m_tileMap[startCoord];
 }

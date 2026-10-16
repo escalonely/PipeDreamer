@@ -57,6 +57,13 @@ public:
 
 	TilePiece::Type Pop();
 
+	/**
+	 * Replace the tile at the back of the queue (the last one due to be played) with a
+	 * new, randomly oriented Stop tile. Used once the player has scored enough points
+	 * to unlock the goal (see Controller::MIN_SCORE_TO_ADVANCE).
+	 */
+	void AddRandomStopTile();
+
 protected:
 	/**
 	 * Underlying vector containing the Pipe objects.

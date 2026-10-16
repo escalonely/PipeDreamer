@@ -329,6 +329,11 @@ private:
 	bool m_fastForward = false;
 
 	/**
+	 * True once a Stop tile has been added to the Queue this round (see MIN_SCORE_TO_ADVANCE).
+	 */
+	bool m_stopTileQueued = false;
+
+	/**
 	 * App properties file used to store player scores.
 	 */
 	juce::ApplicationProperties m_appProperties;

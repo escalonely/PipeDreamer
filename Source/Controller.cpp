@@ -173,9 +173,20 @@ bool Controller::Pump()
 	// Pump more ooze into the board!
 	bool contained = m_board->Pump(GetCurrentOozePerPump());
 
-	// Ooze spill! Game over regardless of score, unless the Stop tile was reached first.
-	if (!contained)
+	if (contained)
 	{
+		// Once enough points have been scored, let the player start steering towards the goal.
+		if (!m_stopTileQueued && (m_board->GetScoreValue() >= MIN_SCORE_TO_ADVANCE))
+		{
+			m_queue->AddRandomStopTile();
+			m_stopTileQueued = true;
+
+			QueueSound(SOUND_NOTIFY);
+		}
+	}
+	else
+	{
+		// Ooze spill! Game over regardless of score, unless the Stop tile was reached first.
 		SoundID soundID = m_board->IsVictory() ? SOUND_LEVEL_UP : SOUND_GAME_OVER;
 		QueueSound(soundID);
 
@@ -237,6 +248,7 @@ void Controller::Reset(Controller::Command cmd)
 	m_board->Reset();
 	m_queue->Reset();
 	m_fastForward = false;
+	m_stopTileQueued = false;
 	m_state = STATE_RUNNING;
 }
 
