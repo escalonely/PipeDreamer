@@ -101,6 +101,12 @@ public:
 	};
 
 	/**
+	 * Points gained in one round, necessary for the STOP tile to spawn and be able 
+	 * to advance to the next difficulty level.
+	 */
+	static const int MIN_SCORE_TO_ADVANCE;	
+
+	/**
 	 * Class destructor.
 	 */
 	virtual ~Controller();

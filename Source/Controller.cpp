@@ -33,6 +33,8 @@ SOFTWARE.
 #include "Queue.h"
 #include "Randomizer.h"
 
+const int Controller::MIN_SCORE_TO_ADVANCE(200);
+
 
 /**
  * Singleton initialization.
