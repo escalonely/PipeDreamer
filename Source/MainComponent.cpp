@@ -81,7 +81,7 @@ void MainComponent::resized()
 	int minDimension = std::min<int>(getLocalBounds().getWidth(), static_cast<int>(getLocalBounds().getHeight() * 1.4516f));
 	m_tileSize = static_cast<int>(minDimension / 13.0f);
 
-	m_fastForwardButtonRect = juce::Rectangle<float>(getLocalBounds().getWidth() / 18.0f, getLocalBounds().getHeight() / 1.1245f, 70.0f, 45.0f).toNearestInt();
+	m_fastForwardButtonRect = juce::Rectangle<float>(getLocalBounds().getWidth() / 18.0f, getLocalBounds().getHeight() * 0.1245f, 70.0f, 45.0f).toNearestInt();
 
 	// Position the trash button right below the tile queue.
 	int queueHStartPos = static_cast<int>(getLocalBounds().getWidth() / 18);
@@ -176,14 +176,14 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 
 		// If user clicked on the fast-forward button, toggle fast-forward state.
 		// This increases the ooze amount in GetCurrentOozePerPump().
-		//if (m_fastForwardButtonRect.contains(clickPos))
-		//{
-		//	controller->SetFastForward(!controller->GetFastForward());
-		//}
+		if (m_fastForwardButtonRect.contains(clickPos))
+		{
+			controller->SetFastForward(!controller->GetFastForward());
+		}
 
 		// If user clicked on the trash button and it's not on cooldown, discard the next
 		// queued tile, just like placing it would, except it's thrown away instead.
-		/*else*/ if (m_trashButtonRect.contains(clickPos))
+		else if (m_trashButtonRect.contains(clickPos))
 		{
 			if (m_trashCooldownRemainingMs == 0)
 			{
@@ -354,7 +354,7 @@ void MainComponent::paint(juce::Graphics& g)
 	}
 
 	// Draw button to accelerate game speed.
-	//DrawFastForwardButton(g);
+	DrawFastForwardButton(g);
 
 	// Draw button to discard the next tile in the queue.
 	DrawTrashButton(g);
