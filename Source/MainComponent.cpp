@@ -41,6 +41,7 @@ SOFTWARE.
 
 const float MainComponent::OOZE_THICKNESS(15.0f);
 const int MainComponent::GUI_REFRESH_RATE(60);
+const int MainComponent::TRASH_COOLDOWN_MS(5000);
 
 
 // ---- Class Implementation ----
@@ -82,6 +83,11 @@ void MainComponent::resized()
 
 	m_fastForwardButtonRect = juce::Rectangle<float>(getLocalBounds().getWidth() / 18.0f, getLocalBounds().getHeight() / 1.1245f, 70.0f, 45.0f).toNearestInt();
 
+	// Position the trash button right below the tile queue.
+	int queueHStartPos = static_cast<int>(getLocalBounds().getWidth() / 18);
+	int queueVStartPos = static_cast<int>(getLocalBounds().getHeight() / 1.3757f);
+	m_trashButtonRect = juce::Rectangle<int>(queueHStartPos - 6, queueVStartPos + m_tileSize + 10, m_tileSize + 12, m_tileSize);
+
 	// Position the hyperlink
 	m_hyperlink->setFont(GetFont(LABEL_VERSION), false /* do not resize */);
 	m_hyperlink->setBounds(	static_cast<int>(getLocalBounds().getWidth() / 1.8f), 
@@ -106,6 +112,10 @@ void MainComponent::timerCallback()
 		// When it reaches 0, clicks are enabled again.
 		if (m_blockInteraction > 0)
 			m_blockInteraction--;
+
+		// When it reaches 0, the trash button is usable again.
+		if (m_trashCooldownRemainingMs > 0)
+			m_trashCooldownRemainingMs = std::max(0, m_trashCooldownRemainingMs - GUI_REFRESH_RATE);
 
 		// Countdown to start pumping ooze.
 		if (m_countDown > 0)
@@ -166,9 +176,22 @@ void MainComponent::mouseDown(const juce::MouseEvent& event)
 
 		// If user clicked on the fast-forward button, toggle fast-forward state.
 		// This increases the ooze amount in GetCurrentOozePerPump().
-		if (m_fastForwardButtonRect.contains(clickPos))
+		//if (m_fastForwardButtonRect.contains(clickPos))
+		//{
+		//	controller->SetFastForward(!controller->GetFastForward());
+		//}
+
+		// If user clicked on the trash button and it's not on cooldown, discard the next
+		// queued tile, just like placing it would, except it's thrown away instead.
+		/*else*/ if (m_trashButtonRect.contains(clickPos))
 		{
-			controller->SetFastForward(!controller->GetFastForward());
+			if (m_trashCooldownRemainingMs == 0)
+			{
+				controller->GetQueue()->Pop();
+				m_trashCooldownRemainingMs = TRASH_COOLDOWN_MS;
+
+				Controller::GetInstance()->QueueSound(Controller::SOUND_CLICK);
+			}
 		}
 
 		else
@@ -233,6 +256,7 @@ void MainComponent::changeListenerCallback(juce::ChangeBroadcaster* source)
 
 					// Restart GUI
 					m_blockInteraction = 0;
+					m_trashCooldownRemainingMs = 0;
 					startTimer(GUI_REFRESH_RATE);
 				}
 				break;
@@ -307,7 +331,7 @@ void MainComponent::paint(juce::Graphics& g)
 	g.fillAll(juce::Colour(67, 67, 67));
 
 	// Draw countdown to ooze.
-	DrawOozeMeter(juce::Point<int>(static_cast<int>(getLocalBounds().getWidth() / 12.05f), 30), g);
+	//DrawOozeMeter(juce::Point<int>(static_cast<int>(getLocalBounds().getWidth() / 12.05f), 30), g);
 
 	// Draw current level number and score
 	DrawLevelAndScore(g);
@@ -330,7 +354,10 @@ void MainComponent::paint(juce::Graphics& g)
 	}
 
 	// Draw button to accelerate game speed.
-	DrawFastForwardButton(g);
+	//DrawFastForwardButton(g);
+
+	// Draw button to discard the next tile in the queue.
+	DrawTrashButton(g);
 
 	// Draw tile queue: queueVStartPos is the origin ob the bottomest tile in the queue
 	int queueVStartPos = static_cast<int>(getLocalBounds().getHeight() / 1.3757f);
@@ -1361,4 +1388,27 @@ void MainComponent::DrawFastForwardButton(juce::Graphics& g)
 	// Frame around button
 	g.setColour(frameColour);
 	g.drawRect(m_fastForwardButtonRect.toFloat(), thickness);
+}
+
+void MainComponent::DrawTrashButton(juce::Graphics& g)
+{
+	bool onCooldown = (m_trashCooldownRemainingMs > 0);
+
+	// Placeholder icon, a downward-pointing triangle (actual trash-can icon to be added later).
+	juce::Point<float> centre(	static_cast<float>(m_trashButtonRect.getCentreX()),
+								static_cast<float>(m_trashButtonRect.getCentreY()));
+	juce::Path trashPath;
+	trashPath.addPolygon(centre, 3, 13.0f, juce::MathConstants<float>::pi);
+
+	juce::Colour iconColour(onCooldown ? juce::Colours::darkgrey : juce::Colours::grey);
+	juce::Colour frameColour(onCooldown ? juce::Colour(50, 50, 50) : juce::Colour(27, 27, 27));
+
+	g.setColour(iconColour);
+	g.fillPath(trashPath);
+	g.setColour(onCooldown ? juce::Colours::grey : juce::Colours::white);
+	g.strokePath(trashPath, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved));
+
+	// Frame around button
+	g.setColour(frameColour);
+	g.drawRect(m_trashButtonRect.toFloat(), 1.5f);
 }

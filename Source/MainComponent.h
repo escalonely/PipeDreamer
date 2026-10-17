@@ -61,6 +61,11 @@ public:
 	static const int GUI_REFRESH_RATE;
 
 	/**
+	 * Cooldown duration of the trash button, in milliseconds.
+	 */
+	static const int TRASH_COOLDOWN_MS;
+
+	/**
 	 * Class constructor.
 	 */
     MainComponent();
@@ -209,6 +214,14 @@ public:
 	 */
 	void DrawFastForwardButton(juce::Graphics& g);
 
+	/**
+	 * Draw the trash button, used to discard the next tile in the queue.
+	 * The location is hard coded, see m_trashButtonRect.
+	 *
+	 * @param g			The graphics context used for drawing.
+	 */
+	void DrawTrashButton(juce::Graphics& g);
+
 
 private:
 	/**
@@ -239,6 +252,16 @@ private:
 	 * Rectangle containing the fast-forward button.
 	 */
 	juce::Rectangle<int> m_fastForwardButtonRect;
+
+	/**
+	 * Rectangle containing the trash button.
+	 */
+	juce::Rectangle<int> m_trashButtonRect;
+
+	/**
+	 * Milliseconds left until the trash button is usable again. 0 if it's ready.
+	 */
+	int m_trashCooldownRemainingMs = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
